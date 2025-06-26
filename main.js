@@ -26,7 +26,7 @@ Promise.all([
   d3.csv("models/disaster-assessment-tool/importance_scores_v4b/instance_necessity_scores.csv", d3.autoType),
   d3.csv("nri_county_level.csv", d3.autoType),
   d3.csv("enriched_source_necessity_scores.csv", d3.autoType),
-  d3.json("recourse_results.json")
+  d3.json("enriched_your_json_file.json")
 
 ]).then(([dataFeatures, usTopo, instRows, nriRows, srcRows, recJSON]) => {
   // stash
@@ -45,18 +45,24 @@ Promise.all([
     });
 
   recourseData = instanceRows.map(r => {
-    const f = String(r.FIPS).padStart(5, "0");
-    // find the JSON entry where original_prediction === counterfactual_prediction
+    // find the JSON entry matching the instance
     const origRec = recourseResults.find(rr =>
-      rr.instance_idx === r.Instance_Index &&
-      rr.original_prediction === rr.counterfactual_prediction
+      rr.instance_idx === r.Instance_Index
     );
-    const sev = origRec != null
+    // console.log(origRec);
+    const origSev = origRec != null
       ? ["low","medium","high"][origRec.original_prediction]
       : null;
+    const cfSev = origRec != null
+      ? ["low","medium","high"][origRec.counterfactual_prediction]
+      : null;
+    
+    const fips = origRec != null ? origRec.FIPS : null;
+    
     return {
-      FIPS:             f,
-      severity:         sev,
+      FIPS:             fips,
+      origSeverity:     origSev,
+      cfSeverity:       cfSev,
       instance_idx:     r.Instance_Index
     };
   });
@@ -129,9 +135,8 @@ const pathGen = d3.geoPath().projection(proj);
           detail: { fips: selectedFips } 
         }));
 
-        // Add this part to update the selected county text
+        // FIXME: replaced with recourseData that doesnt cotain county name
         const row = recourseData.find(r => String(r.FIPS).padStart(5,"0") === fips);
-        console.log(row);
         
         // FIXME: county name not exist, bottom line does not work for all counties
         //const countyName = row ? `${row.County_Name || 'Unknown'}, ${row.State || ''}` : `FIPS ${fips}`;
@@ -143,8 +148,8 @@ const pathGen = d3.geoPath().projection(proj);
         if (has("#user-input"))    updateUserInput(fips);   // Recourse page only
 
         // const row = recourseData.find(r=>String(r.FIPS).padStart(5,"0")===fips);
-        if (row?.severity) {
-                    drawLollipopChart(fips, row.severity);
+        if (row?.origSeverity && row?.cfSeverity) {
+                    drawLollipopChart(fips, row.cfSeverity);
                   } else {
                     d3.select("#chart").html(`<p>No baseline data for FIPS ${fips}</p>`);
                   }
@@ -444,12 +449,11 @@ function updateDataDisplay(fips) {
   if (!row) {
     box.append("p").text(`No data for FIPS ${fips}`);
   } else {
-    box.append("p").text(`Severity: ${row.severity}`);
+    box.append("p").text(`Severity: ${row.origSeverity}`);
   }
 }
 
-  
-  
+// updates from dropdown box
 function updateUserInput(fips){
   if (!has("#user-input")) return;
   const row       = recourseData.find(r => +r.FIPS === +fips);
@@ -476,7 +480,7 @@ function updateUserInput(fips){
      .data(["low","medium","high"])
      .join("option")
        .attr("value", d => d)
-       .property("selected", d => d === row.severity)
+       .property("selected", d => d === row.cfSeverity)
        .text(d => d.charAt(0).toUpperCase() + d.slice(1));
 }
 
@@ -510,6 +514,7 @@ function drawLollipopChart(fips, userLvl) {
   const instanceIdx = getInstanceIndexFromFips(fips);
   const lvlIdx      = severityToIndex(userLvl);
   const rec         = recourseResults.find(r =>
+                        // r.instance_idx === instanceIdx
                         r.instance_idx === instanceIdx &&
                         r.counterfactual_prediction === lvlIdx
                       );
@@ -804,8 +809,18 @@ function drawEnrichedInstanceBar(fips) {
 
   d3.csv("enriched_instance_necessity_scores.csv", d3.autoType)
     .then(rows => {
+      // Find all matching rows
+      const matchingRows = rows.filter(r => String(r.FIPS).padStart(5, "0") === fips);
+      
+      const row = matchingRows.reduce((best, current) => {
+        const countNonZero = obj => Object.values(obj).filter(v => v !== 0 && v != null && v !== "").length;
+        return countNonZero(current) > countNonZero(best) ? current : best;
+      });
+      // console.log(row);
+      // console.log(typeof(row));
+
       // find row by FIPS (column CU)
-      const row = rows.find(r => String(r.FIPS).padStart(5, "0") === fips);
+      // const row = rows.find(r => String(r.FIPS).padStart(5, "0") === fips);
       if (!row) {
         svg.append("text")
           .attr("x", W/2).attr("y", H/2)
@@ -890,7 +905,14 @@ function drawEnrichedGroupBar(fips) {
 
   d3.csv("enriched_group_necessity_scores.csv", d3.autoType)
     .then(rows => {
-      const row = rows.find(r => String(r.FIPS).padStart(5, "0") === fips);
+      // Find all matching rows
+      const matchingRows = rows.filter(r => String(r.FIPS).padStart(5, "0") === fips);
+      
+      const row = matchingRows.reduce((best, current) => {
+        const countNonZero = obj => Object.values(obj).filter(v => v !== 0 && v != null && v !== "").length;
+        return countNonZero(current) > countNonZero(best) ? current : best;
+      });
+
       if (!row) {
         svg.append("text")
           .attr("x", W/2).attr("y", H/2)
@@ -960,8 +982,14 @@ function drawEnrichedSourceBar(fips) {
 
   d3.csv("enriched_source_necessity_scores.csv", d3.autoType)
     .then(rows => {
-      // find the row for this county
-      const row = rows.find(r => String(r.FIPS).padStart(5, "0") === fips);
+      // Find all matching rows
+      const matchingRows = rows.filter(r => String(r.FIPS).padStart(5, "0") === fips);
+      
+      const row = matchingRows.reduce((best, current) => {
+        const countNonZero = obj => Object.values(obj).filter(v => v !== 0 && v != null && v !== "").length;
+        return countNonZero(current) > countNonZero(best) ? current : best;
+      });
+
       if (!row) {
         svg.append("text")
            .attr("x", W/2).attr("y", H/2)
@@ -1137,6 +1165,8 @@ ratings.forEach((r, i) => {
       const f = String(d.id).padStart(5,"0"),
             r = nriMap.get(f) || "none";
       d3.select("#tip")
+        .style("background-color", "#bd0026")
+        .style("border-color", "#bd0026")
         .style("opacity",0.9)
         .html(`<strong>FIPS ${f}</strong><br>Risk: ${r}`)
         .style("left",(e.pageX+8)+"px")
