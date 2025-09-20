@@ -18,11 +18,7 @@
   <script src="https://d3js.org/topojson.v3.min.js" defer></script>
 
   <!-- JS -->
-  <script src="main.js" defer></script>
-  <script src="create_sliders.js" defer></script>
-  <script src="simulation.html.js" defer></script>
-  <script src="modal_logic.js" defer></script>
-  <script src="nav_control.js" defer></script>
+  <script type="module" src="js/app.js" defer></script>
 </head>
 
 
@@ -168,15 +164,6 @@
         <div id="feature_modal_transitions_" class="modal-body modal-grid-box modal-content-section">
           <button class="back-btn" data-target="feature_modal_menu">← Back to Menu</button>
           <h2>Transitions_</h2>
-        <!-- The single slider below will be REPLACED by 80 sliders with create_sliders.js -->
-          <div class="slider-container">
-            <div class="slider-label">
-              <span> transition_0 </span>
-              <span class="slider-value" id="transition_0-value">100</span> <!-- initial / set value goes here -->
-            </div>
-            <input type="range" min="0" max="1000000000" value="100" class="slider" id="transition_0-slider" data-label="transition_0">
-          </div>
-        <!-- The single slider below will be REPLACED by 80 sliders with create_sliders.js -->
         </div>
         
         <div id="feature_modal_news_" class="modal-body modal-grid-box modal-content-section">
@@ -216,5 +203,15 @@
   
   <div id="tip" class="tooltip"></div>
 
+  <template id="slider-template">
+    <div class="slider-container">
+      <div class="slider-label">
+        <span class="slider-name">Feature Name</span>
+        <span class="slider-value">0</span>
+      </div>
+      <input type="range" min="0" max="1" value="0" step="any" class="slider">
+    </div>
+  </template>
+  
 </body>
 </html>

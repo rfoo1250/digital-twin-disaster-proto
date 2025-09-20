@@ -1,7 +1,6 @@
 # File name: generate_counterfactuals.py
 # File description: runs model with dict as inputs
-
-# TODO: convert this to a Flask Backend API
+#  as a Flask Backend API
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS

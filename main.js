@@ -420,7 +420,6 @@ function clearWorldMap() {
 //     /** helper: mark selected item */
 //     function selectGroup(g){
 //       grpCont.selectAll('a').classed('selected', d => d === g);
-//       // TODO: call whatever update/filter routine you already have
 //       console.log('Selected group:', g);
 //     }
 

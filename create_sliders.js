@@ -3,11 +3,6 @@
 //                  reads from data_features.csv as well
 //                  Focused on News, Reddit, and Transition columns
 
-/*  TODO: 
- * communicate with main.js to have read data_features.csv so here dont have to read again
- * 
- */
-
 // FOo
 
 let csvData = [];

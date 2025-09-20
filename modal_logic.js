@@ -1,12 +1,6 @@
 // File name: modal_logic.js
 // File description: all modal's logics and logistics from simulation.html goes here
 
-// TODO: verify if S wants to keep pop-ups or change the chloromap pane (simplier imo)
-
-// for snapshot modal
-
-// it is very messy rn!
-
 // Global variables - use window object to avoid redeclaration errors
 window.fipsUpdater = window.fipsUpdater || {};
 window.fipsUpdater.csvData = window.fipsUpdater.csvData || [];
@@ -23,7 +17,6 @@ async function loadCSVData() {
       return;
     }
     
-    // TODO: change to filteredData
     // Check if CSV data is already loaded globally (common pattern)
     if (window.csvData && window.csvData.length > 0) {
       console.log('Using existing global csvData');
