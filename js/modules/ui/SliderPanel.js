@@ -90,7 +90,7 @@ function generateAllSliders() {
                 sliderInput.dataset.column = columnName; // Store original column name
 
                 // Attach the event listener for this specific slider
-                sliderInput.addEventListener('input', handleSliderInput);
+                sliderInput.addEventListener('change', handleSliderInput);
 
                 container.appendChild(sliderClone);
             });
@@ -111,17 +111,17 @@ function handleSliderInput(event) {
     // Update the visual display for this slider
     const valueDisplay = document.getElementById(`${column}-value`);
     if (valueDisplay) {
-        valueDisplay.textContent = value.toFixed(4); // Format for better readability
+        valueDisplay.textContent = value.toFixed(4);
     }
 
     // Create a new interventions object to avoid direct mutation
     const newInterventions = {
-        ...state.interventions,
+        ...appState.interventions, // Use appState here
         [column]: value,
     };
 
     // Update the central state. This is the only "side effect".
-    updateState('interventions', newInterventions);
+    setState('interventions', newInterventions); // Use setState here
 }
 
 
