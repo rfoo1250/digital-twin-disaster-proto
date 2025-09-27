@@ -9,14 +9,57 @@
  *
  * Responsibilities:
  * 1. Generate all sliders in the modal after the main data is loaded.
- * 2. Set the maximum value for each slider based on the entire dataset.
+ * 2. Set the maximum value for each slider based on the entire dataset, using a logarithmic scale.
  * 3. Update the values of all sliders when a new FIPS county is selected.
  * 4. Listen for user input on any slider and update the central application state.
+ * 5. Format slider values for user-friendly display (e.g., 1.2K, 5.3M).
  */
 
 // imports
 import { appState, setState } from '../state.js';
 import { getDataFeatures, getDataForFips, columnDefinitions } from '../services/DataManager.js';
+
+// --- Helper Functions ---
+
+/**
+ * Converts a linear value to a logarithmic scale for the slider.
+ * We use log10(value + 1) to gracefully handle input values of 0.
+ * @param {number} value The original, linear data value.
+ * @returns {number} The corresponding value on a log10 scale.
+ */
+function linearToLog(value) {
+    return Math.log10(value + 1);
+}
+
+/**
+ * Converts a logarithmic slider value back to a linear scale.
+ * This is the inverse of the linearToLog function.
+ * @param {number} logValue The value from the slider's log scale.
+ * @returns {number} The original, linear data value.
+ */
+function logToLinear(logValue) {
+    return Math.pow(10, logValue) - 1;
+}
+
+/**
+ * Formats a number into a user-friendly string (e.g., 987, 1.2K, 5.3M).
+ * This function only affects the display and not the underlying data value.
+ * @param {number} num The number to format.
+ * @returns {string} The formatted string.
+ */
+function formatNumberForDisplay(num) {
+    if (num < 1000) {
+        // For numbers less than 1000, show up to 1 decimal place if not an integer.
+        return num.toFixed(num % 1 === 0 ? 0 : 1);
+    } else if (num < 1000000) {
+        // For thousands, show as "K"
+        return (num / 1000).toFixed(1) + 'K';
+    } else {
+        // For millions, show as "M"
+        return (num / 1000000).toFixed(1) + 'M';
+    }
+}
+
 
 /**
  * Initializes the SliderPanel module.
@@ -26,8 +69,6 @@ function init() {
     const sliderTemplate = document.getElementById('slider-template');
 
     if (!sliderTemplate) {
-        // If it doesn't exist, this page doesn't use the slider panel.
-        // Do nothing and exit the function immediately.
         return;
     }
     
@@ -49,7 +90,6 @@ function init() {
 
 /**
  * Generates the HTML for all sliders by cloning a template.
- * This replaces the string-based generation from create_sliders.js.
  */
 function generateAllSliders() {
     const containers = {
@@ -70,27 +110,20 @@ function generateAllSliders() {
         const columns = columnDefinitions[category];
 
         if (container && columns) {
-            // Clear any existing sliders
             container.querySelectorAll('.slider-container').forEach(el => el.remove());
 
             columns.forEach(columnName => {
                 const sliderClone = sliderTemplate.content.cloneNode(true);
-                const containerDiv = sliderClone.querySelector('.slider-container');
                 const labelSpan = sliderClone.querySelector('.slider-name');
                 const valueSpan = sliderClone.querySelector('.slider-value');
                 const sliderInput = sliderClone.querySelector('.slider');
 
-                // Configure the new slider element from the template
-                const readableName = columnName;
-                labelSpan.textContent = readableName;
+                labelSpan.textContent = columnName;
                 valueSpan.id = `${columnName}-value`;
-
                 sliderInput.id = `${columnName}-slider`;
-                sliderInput.dataset.column = columnName; // Store original column name
+                sliderInput.dataset.column = columnName; 
 
-                // Attach the event listener for this specific slider
                 sliderInput.addEventListener('input', handleSliderInput);
-
                 container.appendChild(sliderClone);
             });
         }
@@ -98,35 +131,35 @@ function generateAllSliders() {
 }
 
 /**
- * Handles input on any slider, updating the central state.
- * This replaces sendSliderData() and the listener logic from simulation.html.js.
+ * Handles input on any slider, updating the central state and the UI display.
+ * The display is formatted, but the state stores the raw linear value.
  * @param {Event} event - The input event from the slider.
  */
 function handleSliderInput(event) {
     const slider = event.target;
     const column = slider.dataset.column;
-    const value = parseFloat(slider.value);
+    const logValue = parseFloat(slider.value); 
+    const linearValue = logToLinear(logValue);
 
-    // Update the visual display for this slider
+    // Update the visual display with the user-friendly formatted number
     const valueDisplay = document.getElementById(`${column}-value`);
     if (valueDisplay) {
-        valueDisplay.textContent = value.toFixed(4);
+        valueDisplay.textContent = formatNumberForDisplay(linearValue);
     }
 
-    // Create a new interventions object to avoid direct mutation
+    // The central state always stores the precise, unformatted linear value
     const newInterventions = {
-        ...appState.interventions, // Use appState here
-        [column]: value,
+        ...appState.interventions,
+        [column]: linearValue,
     };
 
-    // Update the central state. This is the only "side effect".
-    setState('interventions', newInterventions); // Use setState here
+    setState('interventions', newInterventions);
 }
 
 
 /**
- * Updates all slider values to reflect the data for a specific FIPS code.
- * This logic is consolidated from modal_logic.js.
+ * Updates all slider values for a specific FIPS code.
+ * The slider's position is set on a log scale, and the display is formatted.
  * @param {string} fipsCode - The FIPS code of the selected county.
  */
 function updateAllSlidersForFips(fipsCode) {
@@ -136,20 +169,20 @@ function updateAllSlidersForFips(fipsCode) {
         return;
     }
 
-    // Reset interventions when a new county is selected
     setState('interventions', {});
 
-    // Iterate over all known columns and update their corresponding sliders
     for (const category in columnDefinitions) {
         columnDefinitions[category].forEach(columnName => {
             const slider = document.getElementById(`${columnName}-slider`);
             const valueDisplay = document.getElementById(`${columnName}-value`);
-            const value = data[columnName];
+            const linearValue = data[columnName];
 
-            if (slider && value !== undefined && value !== null) {
-                slider.value = value;
+            if (slider && linearValue !== undefined && linearValue !== null) {
+                slider.value = linearToLog(linearValue);
+
+                // Update the display with the user-friendly formatted number
                 if (valueDisplay) {
-                    valueDisplay.textContent = value.toFixed(4);
+                    valueDisplay.textContent = formatNumberForDisplay(linearValue);
                 }
             }
         });
@@ -157,9 +190,7 @@ function updateAllSlidersForFips(fipsCode) {
 }
 
 /**
- * Calculates the maximum value for each column across the entire dataset
- * and sets the 'max' attribute on the corresponding slider.
- * This logic is consolidated from modal_logic.js.
+ * Calculates and sets the slider maximums using a logarithmic scale.
  */
 function calculateAndSetSliderMaximums() {
     const fullDataset = getDataFeatures();
@@ -168,25 +199,25 @@ function calculateAndSetSliderMaximums() {
         return;
     }
 
-    const padding = 1.1; // Add 10% padding to the max value
+    const padding = 1.1; 
 
     for (const category in columnDefinitions) {
         columnDefinitions[category].forEach(columnName => {
-            // Extract all valid, numeric values for this column
             const values = fullDataset
                 .map(row => parseFloat(row[columnName]))
                 .filter(val => !isNaN(val));
 
             if (values.length > 0) {
                 const maxValue = Math.max(...values);
-                const sliderMax = maxValue * padding;
+                const paddedMax = maxValue * padding;
+                const sliderLogMax = linearToLog(paddedMax);
                 const slider = document.getElementById(`${columnName}-slider`);
+
                 if (slider) {
-                    slider.max = sliderMax;
+                    slider.max = sliderLogMax;
+                    slider.step = 'any'; 
                 }
-            }
-            else {
-                // ADD THIS ELSE BLOCK TO DEBUG
+            } else {
                 console.warn(`No valid numeric data found for column: '${columnName}'. Max not set.`);
             }
         });

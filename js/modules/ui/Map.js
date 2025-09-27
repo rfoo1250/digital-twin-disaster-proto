@@ -91,7 +91,7 @@ function drawMapDefault() {
                 d3.select("#county_selected_text").text(`Selected: ${countyName}, ${stateName}`);
             } else {
                 // Provide a fallback for the user if no data exists
-                d3.select("#selected-county-text").text(`No data available`);
+                d3.select("#county_selected_text").text(`No data available`);
                 console.warn(`No data found for FIPS code: ${fips}`);
             }
         })
