@@ -14,5 +14,6 @@ check_fips.py
 data_cleaning.py
 .DS_Store
 
-# Resources, notes, and appendices
+# Miscellaneous
+old*
 .resources.md
