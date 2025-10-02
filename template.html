@@ -27,12 +27,8 @@ template.html: this is just a template that includes the map, nav, content neede
   HEADER: Provides consistent navigation across all pages.
   ================================================================== -->
   <header>
-    <h1></h1>
-    <nav class="controls">
-      <a href="index.html" class="nav-btn">Attribution Score</a>
-      <a href="simulation.html" class="nav-btn">Simulation through Intervention</a>
-      <a href="algorithmic_recourse.html" class="nav-btn">Algorithmic Recourse</a>
-    </nav>
+    <!-- Auto loads nav buttons here now -->
+    
   </header>
 
   <!-- =================================================================
@@ -64,6 +60,7 @@ template.html: this is just a template that includes the map, nav, content neede
     The Map.js module will automatically find the #map element and render into it.
   -->
   <script type="module" src="../js/app.js" defer></script>
+  <script src="nav_control.js" defer></script>
 
 </body>
 </html>
