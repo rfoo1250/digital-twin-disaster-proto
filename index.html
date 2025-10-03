@@ -45,7 +45,15 @@
     <!-- Left: US county choropleth -->
     <div class="left-panel">
       <svg id="map" class="chart" role="img"></svg>
-      <p id="county_selected_text"></p>
+      <div class="zoom-controls">
+        <p id="zoom-label">Zoom</p>
+        <button id="zoom_in">+</button>
+        <button id="zoom_out">-</button>
+      </div>
+      <div id="county-selected-text-container">
+        <p id="county_selected_text"></p>
+
+      </div>
     </div>
     <!-- Right: features bar + Dynamic World panel -->
     <!-- <div class="side-charts">
