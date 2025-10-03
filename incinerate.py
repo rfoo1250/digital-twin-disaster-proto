@@ -252,23 +252,49 @@ def update_active_neighbors(g):
 # Visualization and Data Functions
 # =========================================================================
 
-def draw_graph(g, ns, node_colors, edge_colors, pos_dict, fs, filepath=None):
+def draw_graph(g, ns, node_colors, edge_colors, pos_dict, fs, filepath=None, original_node_ids=None):
     """Draws the graph using matplotlib and optionally saves it to a file."""
     plt.figure(figsize=(12, 12))
     title = os.path.basename(filepath).split('.')[0] if filepath else "Interactive View"
     plt.title(f"Wildfire Simulation - {title.replace('_', ' ').title()}")
     nx.draw(g, node_size=ns, node_color=node_colors, edge_color=edge_colors, with_labels=False, pos=pos_dict)
-    
+
+    # === Border Annotations using Original Node IDs ===
+    xs = [pos[0] for pos in pos_dict.values()]
+    ys = [pos[1] for pos in pos_dict.values()]
+    leftmost_x, rightmost_x = min(xs), max(xs)
+    bottom_y, top_y = min(ys), max(ys)
+
+    border_nodes = {
+        "left":   [n for n, pos in pos_dict.items() if pos[0] == leftmost_x],
+        "right":  [n for n, pos in pos_dict.items() if pos[0] == rightmost_x],
+        "bottom": [n for n, pos in pos_dict.items() if pos[1] == bottom_y],
+        "top":    [n for n, pos in pos_dict.items() if pos[1] == top_y]
+    }
+
+    for side, nodes in border_nodes.items():
+        for node in nodes:
+            x, y = pos_dict[node]
+            label_id = original_node_ids[node-1] if original_node_ids is not None and node-1 < len(original_node_ids) else node
+
+            if side == "left":
+                plt.text(x - 0.02, y, str(label_id), fontsize=8, ha='right', va='center', color='black')
+            elif side == "right":
+                plt.text(x + 0.02, y, str(label_id), fontsize=8, ha='left', va='center', color='black')
+            elif side == "bottom":
+                plt.text(x, y - 0.02, str(label_id), fontsize=8, ha='center', va='top', color='black')
+            elif side == "top":
+                plt.text(x, y + 0.02, str(label_id), fontsize=8, ha='center', va='bottom', color='black')
+
     if filepath:
         plt.savefig(filepath, bbox_inches='tight', dpi=150)
         print(f"Saved image to {filepath}")
     else:
         plt.show(block=False)
-        if SLEEP_TIME > 0:
-            plt.pause(SLEEP_TIME)
-    
-    plt.close()
+    if SLEEP_TIME > 0:
+        plt.pause(SLEEP_TIME)
 
+    plt.close()
 
 def save_graph(g, node_fn, edge_fn):
     """Saves the graph node and edge attributes to CSV files."""
@@ -415,7 +441,7 @@ if __name__ == '__main__':
         edge_colors = [g.edges[e].get('color', 'gray') for e in g.edges()]
         
         filepath = os.path.join(SAVE_FOLDER, f"timestep_{i:03d}.png") if SAVE_IMAGES else None
-        draw_graph(g, 50, node_colors, edge_colors, pos_dict, 10, filepath=filepath)
+        draw_graph(g, 50, node_colors, edge_colors, pos_dict, 10, filepath=filepath, original_node_ids=node_ids)
 
         g, colors = incinerate(g, colors, edge_list)
         
@@ -434,5 +460,5 @@ if __name__ == '__main__':
     node_colors = [g.nodes[n]['color'] for n in sorted(g.nodes())]
     edge_colors = [g.edges[e].get('color', 'gray') for e in g.edges()]
     filepath = os.path.join(SAVE_FOLDER, f"final_state_{final_timestep:03d}.png") if SAVE_IMAGES else None
-    draw_graph(g, 50, node_colors, edge_colors, pos_dict, 10, filepath=filepath)
+    draw_graph(g, 50, node_colors, edge_colors, pos_dict, 10, filepath=filepath, original_node_ids=node_ids)
 
