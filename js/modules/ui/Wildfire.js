@@ -1,11 +1,10 @@
 // js/modules/ui/Wildfire.js
-import { loadWildfireSimulation, getWildfireProgression, getWildfireData, getWildfireGrid } from '../services/DataManager.js';
+import { loadWildfireSimulation, getWildfireData } from '../services/DataManager.js';
 
 async function startSimulation(canvas) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Fetch and store wildfire simulation
     await loadWildfireSimulation();
 
     const wildfire = getWildfireData();
@@ -21,36 +20,34 @@ async function startSimulation(canvas) {
     function drawStep() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const ts = timesteps[stepIndex];
-        const grid = getWildfireGrid(timesteps, ts.timestep);
 
-        grid.forEach((row, r) => {
-            row.forEach((node, c) => {
-                if (!node) return;
+        ts.nodes.forEach(node => {
+            // To mimic matplotlib: top row (row=0) appears at top of canvas.
+            // Invert the Y-axis mapping for drawing.
+            const x = node.col * cellSize;
+            const y = (gridSize - 1 - node.row) * cellSize; // invert Y-axis
 
-                if (node.state === 'empty') {
-                    ctx.fillStyle = 'white';
-                    ctx.strokeStyle = '#ccc';
-                    ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-                    ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
-                } else {
-                    ctx.fillStyle = node.color || 'gray';
-                    ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
-                }
-            });
+            if (node.state === 'empty') {
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = '#ccc';
+                ctx.fillRect(x, y, cellSize, cellSize);
+                ctx.strokeRect(x, y, cellSize, cellSize);
+            } else {
+                ctx.fillStyle = node.color || 'gray';
+                ctx.fillRect(x, y, cellSize, cellSize);
+            }
         });
 
-        // Draw border lines aligned with gridSize
         ctx.strokeStyle = '#ccc';
-        for (let r = 0; r <= gridSize; r++) {
+        for (let i = 0; i <= gridSize; i++) {
             ctx.beginPath();
-            ctx.moveTo(0, r * cellSize);
-            ctx.lineTo(gridSize * cellSize, r * cellSize);
+            ctx.moveTo(0, i * cellSize);
+            ctx.lineTo(gridSize * cellSize, i * cellSize);
             ctx.stroke();
-        }
-        for (let c = 0; c <= gridSize; c++) {
+
             ctx.beginPath();
-            ctx.moveTo(c * cellSize, 0);
-            ctx.lineTo(c * cellSize, gridSize * cellSize);
+            ctx.moveTo(i * cellSize, 0);
+            ctx.lineTo(i * cellSize, gridSize * cellSize);
             ctx.stroke();
         }
 
@@ -80,13 +77,14 @@ function addTooltip(canvas, gridSize, cellSize, timesteps, getStepIndex) {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
+        // Adjust for inverted Y-axis
         const col = Math.floor(x / cellSize);
-        const row = Math.floor(y / cellSize);
+        const invertedRow = Math.floor(y / cellSize);
+        const row = gridSize - 1 - invertedRow; // invert mapping back
 
         const stepIndex = getStepIndex();
         const ts = timesteps[stepIndex];
-        const grid = getWildfireGrid(timesteps, ts.timestep);
-        const node = grid[row]?.[col];
+        const node = ts.nodes.find(n => n.row === row && n.col === col);
 
         if (row >= 0 && row < gridSize && col >= 0 && col < gridSize) {
             tooltip.style.display = 'block';

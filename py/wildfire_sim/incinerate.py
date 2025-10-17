@@ -104,12 +104,9 @@ def update_active_neighbors(g):
         g.nodes[itemm]['num_of_active_neighbors'] = num
 
 def node_id_to_grid(node_id, grid_size):
-    """
-    Given a node ID and grid size, return its (row, col) indices.
-    Node IDs start at 1 and increase left-to-right, then top-to-bottom.
-    """
-    row = (node_id - 1) // grid_size  # integer division
-    col = (node_id - 1) % grid_size   # remainder
+    # old behavior: bottom→top first, then left→right
+    col = (node_id - 1) // grid_size   # which column
+    row = (node_id - 1) % grid_size    # which row (bottom→top)
     return row, col
 
 def incinerate(g, colors, edge_list):
