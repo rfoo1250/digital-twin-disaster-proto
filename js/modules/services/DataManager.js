@@ -68,6 +68,7 @@ async function loadAllData() {
         const allData = {
             dataFeatures,
             countiesTopo: topojson.feature(usTopo, usTopo.objects.counties).features,
+            statesTopo: topojson.feature(usTopo, usTopo.objects.states).features,
             instanceNecessity,
             nriData,
             sourceNecessity,
@@ -220,6 +221,10 @@ function getCountyTopoData() {
     return appState.allData?.countiesTopo || [];
 }
 
+function getStateTopoData() {
+    return appState.allData?.statesTopo || [];
+}
+
 function getDataFeatures() {
     return appState.allData?.dataFeatures || [];
 }
@@ -261,20 +266,12 @@ function getWildfireProgression() {
 }
 
 // TODO: import the geojson file and extract natioanl forest when it comes to it
-// for now, hardcoding the exact coord format in geojson
-const forestFeature = { 
-    type: "Feature",
-    properties: { FORESTNAME: "Arapaho and Roosevelt NF" },
-    geometry: { type: "Polygon", coordinates: 
-        [
-            [-105.82718737, 40.245806079069496],
-            [-105.83644831, 40.250272879069456],
-            [-105.86210778, 40.214520559069619],
-            [-105.84483853, 40.205599019069709],
-            [-105.82718737, 40.245806079069496]
-        ]
-    }
-}; // MultiPolygon
+// for now, leaving this empty
+const forestFeature = null;
+
+
+
+
 
 
 export {
@@ -282,6 +279,7 @@ export {
     getDataForFips,
     columnDefinitions,
     getCountyTopoData,
+    getStateTopoData,
     getDataFeatures,
     getNriData,
     getInstanceNecessityData,
