@@ -123,6 +123,59 @@ function drawMapDefault() {
         .on("mouseout", (e, d) => {
             tooltip.style("opacity", 0);
             d3.select(e.currentTarget).attr("stroke", "#999").attr("stroke-width", strokeWidth);
+        })
+        .on("dblclick", (e, d) => {
+            const stateFips = String(d.id).substring(0, 2);
+            const states = getStateTopoData();
+            const stateFeature = states.find(s => String(s.id).padStart(2, "0") === stateFips);
+
+            const svg = d3.select("#map");
+            const W = svg.node().clientWidth, H = svg.node().clientHeight;
+
+            if (!stateFeature) return;
+
+            // Check if we're already focused on this state
+            const isFocused = g.select(".state-outline").node();
+
+            if (!isFocused) {
+                // Focus on state
+                const [[x0, y0], [x1, y1]] = pathGen.bounds(stateFeature);
+                const dx = x1 - x0, dy = y1 - y0;
+                const x = (x0 + x1) / 2, y = (y0 + y1) / 2;
+                const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / W, dy / H)));
+                const translate = [W / 2 - scale * x, H / 2 - scale * y];
+
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+                );
+
+                strokeWidth = 0.5;
+                g.selectAll("path").attr("stroke-width", strokeWidth);
+                g.selectAll("path")
+                    .transition().duration(500)
+                    .style("opacity", c => String(c.id).substring(0, 2) === stateFips ? 1 : 0.2);
+
+                g.selectAll(".state-outline").remove();
+                g.append("path")
+                    .datum(stateFeature)
+                    .attr("class", "state-outline")
+                    .attr("d", pathGen)
+                    .attr("fill", "none")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", strokeWidth * 3)
+                    .attr("pointer-events", "none");
+            } else {
+                // Reset focus (unfocus)
+                svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
+
+                strokeWidth = 1;
+                g.selectAll("path").attr("stroke-width", strokeWidth)
+                    .transition().duration(500)
+                    .style("opacity", 1);
+
+                g.selectAll(".state-outline").remove();
+            }
         });
 
     // Trial: wildfire sim 
@@ -151,6 +204,7 @@ function drawMapDefault() {
     });
 
     svg.call(zoom);
+    svg.on("dblclick.zoom", null);
 
     d3.select("#zoom_in").on("click", () => {
         svg.transition().call(zoom.scaleBy, 1.2);
