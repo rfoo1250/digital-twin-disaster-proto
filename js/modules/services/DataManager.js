@@ -8,38 +8,8 @@
  */
 import { appState, setState } from '../state.js';
 import { runWildfireSimulation } from './ApiClient.js';
+import { forestFeature } from './data copy.js';
 
-
-// Column definitions, consolidated from create_sliders.js
-const columnDefinitions = {
-    news: [
-        'Num_News', 'News_Trees', 'News_Power Lines', 'News_Roofs',
-        'News_Buildings', 'News_Vehicles', 'News_Agriculture', 'News_Infrastructure'
-    ],
-    reddit: [
-        'Num_Reddit', 'Reddit_Trees', 'Reddit_Power Lines', 'Reddit_Roofs',
-        'Reddit_Buildings', 'Reddit_Vehicles', 'Reddit_Agriculture', 'Reddit_Infrastructure'
-    ],
-    transition: [
-        'transition_0_0', 'transition_0_1', 'transition_0_2', 'transition_0_3', 'transition_0_4',
-        'transition_0_5', 'transition_0_6', 'transition_0_7', 'transition_0_8', 'transition_1_0',
-        'transition_1_1', 'transition_1_2', 'transition_1_3', 'transition_1_4', 'transition_1_5',
-        'transition_1_6', 'transition_1_7', 'transition_1_8', 'transition_2_0', 'transition_2_1',
-        'transition_2_2', 'transition_2_3', 'transition_2_4', 'transition_2_5', 'transition_2_6',
-        'transition_2_7', 'transition_2_8', 'transition_3_0', 'transition_3_1', 'transition_3_2',
-        'transition_3_3', 'transition_3_4', 'transition_3_5', 'transition_3_6', 'transition_3_7',
-        'transition_3_8', 'transition_4_0', 'transition_4_1', 'transition_4_2', 'transition_4_3',
-        'transition_4_4', 'transition_4_5', 'transition_4_6', 'transition_4_7', 'transition_4_8',
-        'transition_5_0', 'transition_5_1', 'transition_5_2', 'transition_5_3', 'transition_5_4',
-        'transition_5_5', 'transition_5_6', 'transition_5_7', 'transition_5_8', 'transition_6_0',
-        'transition_6_1', 'transition_6_2', 'transition_6_3', 'transition_6_4', 'transition_6_5',
-        'transition_6_6', 'transition_6_7', 'transition_6_8', 'transition_7_0', 'transition_7_1',
-        'transition_7_2', 'transition_7_3', 'transition_7_4', 'transition_7_5', 'transition_7_6',
-        'transition_7_7', 'transition_7_8', 'transition_8_0', 'transition_8_1', 'transition_8_2',
-        'transition_8_3', 'transition_8_4', 'transition_8_5', 'transition_8_6', 'transition_8_7',
-        'transition_8_8'
-    ]
-};
 
 /**
  * Loads all necessary data files for the application.
@@ -73,7 +43,8 @@ async function loadAllData() {
             sourceNecessity,
             recourseResults,
             groupNecessity,
-            fipsToInstanceMap: new Map(instanceNecessity.map(r => [String(r.FIPS).padStart(5, "0"), r.Instance_Index || r.FIPS]))
+            fipsToInstanceMap: new Map(instanceNecessity.map(r => [String(r.FIPS).padStart(5, "0"), r.Instance_Index || r.FIPS])),
+            forestFeature
         };
 
         setState('allData', allData);
@@ -260,27 +231,30 @@ function getWildfireProgression() {
   return getFireProgression(getWildfireData().timesteps);
 }
 
+function getForestFeature() {
+    return appState.allData?.forestFeature || null;
+}
+
 // TODO: import the geojson file and extract natioanl forest when it comes to it
 // for now, hardcoding the exact coord format in geojson
-const forestFeature = { 
-    type: "Feature",
-    properties: { FORESTNAME: "Arapaho and Roosevelt NF" },
-    geometry: { type: "Polygon", coordinates: 
-        [
-            [-105.82718737, 40.245806079069496],
-            [-105.83644831, 40.250272879069456],
-            [-105.86210778, 40.214520559069619],
-            [-105.84483853, 40.205599019069709],
-            [-105.82718737, 40.245806079069496]
-        ]
-    }
-}; // MultiPolygon
+// const forestFeature = { 
+//     type: "Feature",
+//     properties: { FORESTNAME: "Arapaho and Roosevelt NF" },
+//     geometry: { type: "Polygon", coordinates: 
+//         [
+//             [-105.82718737, 40.245806079069496],
+//             [-105.83644831, 40.250272879069456],
+//             [-105.86210778, 40.214520559069619],
+//             [-105.84483853, 40.205599019069709],
+//             [-105.82718737, 40.245806079069496]
+//         ]
+//     }
+// }; // MultiPolygon
 
 
 export {
     loadAllData,
     getDataForFips,
-    columnDefinitions,
     getCountyTopoData,
     getDataFeatures,
     getNriData,
@@ -296,5 +270,5 @@ export {
     groupNodesByColor,
     getWildfireGrid,
     countStatesAtTimestep,
-    forestFeature
+    getForestFeature
 };

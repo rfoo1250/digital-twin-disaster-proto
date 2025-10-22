@@ -6,7 +6,7 @@
  * map's legend and display modes (Data Features vs. NRI).
  */
 import { appState, setState } from '../state.js';
-import { getCountyTopoData, getDataFeatures, getDataForFips, getNriData, forestFeature } from '../services/DataManager.js';
+import { getCountyTopoData, getDataFeatures, getDataForFips, getNriData, getForestFeature } from '../services/DataManager.js';
 
 // Module-level variables
 const tooltip = d3.select("#tip");
@@ -71,7 +71,11 @@ function drawMapDefault() {
     const data = getDataFeatures();
     const countMap = new Map(d3.rollups(data, vs => vs.length, d => String(d.FIPS).padStart(5, '0')));
 
-    const g = svg.append("g"); // container for other SVG elements.
+    // main container for zoomable layers
+    const container = svg.append("g").attr("class", "map-container");
+
+    // Default (county) layer
+    const g = container.append("g").attr("class", "default-layer");
 
     g.selectAll("path")
         .data(getCountyTopoData())
@@ -119,31 +123,27 @@ function drawMapDefault() {
         });
 
     // Trial: wildfire sim 
-    const forestLayer = svg.append("g").attr("class", "forest-layer");
-    
-    const forestCollection = {
-        type: "FeatureCollection",
-        features: [forestFeature]
-    };
+    const forestLayer = container.append("g").attr("class", "forest-layer");
 
+    // draw your new Arapaho & Roosevelt NF polygon
     forestLayer.append("path")
-        .datum(forestFeature)   // single feature, no array
+        .datum(getForestFeature()) // get from DataManager / state
         .attr("d", pathGen)
         .attr("fill", "darkgreen")
-        .attr("opacity", 0.2)
-        .attr("stroke", "darkgreen");
+        .attr("opacity", 0.3)
+        .attr("stroke", "black")
+        .attr("stroke-width", 1.5);
 
-    console.log("Projected forest point:", proj([-105.82718737, 40.245806079069496]));
-    console.log("Forest path:", d3.geoPath().projection(proj)(forestFeature));
-
-    console.log("Forest bounds:", d3.geoBounds(forestFeature));
+    // console.log("Forest path:", d3.geoPath().projection(proj)(getForestFeature()));
+    // console.log("Forest bounds:", d3.geoBounds(getForestFeature()));
+    // console.log("County bounds:", d3.geoBounds({type: "FeatureCollection", features: getCountyTopoData()}));
 
     // Zoom functionality
     const zoom = d3.zoom()
-        .scaleExtent([1, 8]) // zoom range
-        .on("zoom", (event) => {
-        g.attr("transform", event.transform);
-        });
+    .scaleExtent([1, 8])
+    .on("zoom", (event) => {
+        container.attr("transform", event.transform);
+    });
 
     svg.call(zoom);
 
@@ -154,6 +154,8 @@ function drawMapDefault() {
     d3.select("#zoom_out").on("click", () => {
         svg.transition().call(zoom.scaleBy, 0.8);
     });
+
+
 }
 
 /**
@@ -163,7 +165,11 @@ function drawMapNRI() {
     const svg = d3.select("#map");
     svg.selectAll("*").remove();
     const W = svg.node().clientWidth, H = svg.node().clientHeight;
-    const proj = d3.geoAlbersUsa().fitSize([W, H], { type: "FeatureCollection", features: getCountyTopoData() });
+    // const proj = d3.geoAlbersUsa().fitSize([W, H], { type: "FeatureCollection", features: getCountyTopoData() });
+    const proj = d3.geoAlbersUsa().fitSize(
+        [W, H],
+        { type: "FeatureCollection", features: [...getCountyTopoData(), getForestFeature()] }
+    ); // making sure both fitted inside
     const pathGen = d3.geoPath().projection(proj);
 
     const nriMap = new Map(getNriData().map(r => [String(r.STCOFIPS).padStart(5, "0"), String(r.RISK_RATNG).toLowerCase()]));
