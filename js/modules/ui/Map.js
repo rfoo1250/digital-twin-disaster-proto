@@ -216,6 +216,38 @@ function drawMapDefault() {
         g.selectAll(".state-outline").remove();
     });
 
+    
+    // --- Dropdown toggle behavior ---
+    const dropdownBtn = document.getElementById("layer-toggle-btn");
+    const dropdownMenu = document.getElementById("layer-dropdown");
+
+    if (dropdownBtn) {
+    dropdownBtn.addEventListener("click", () => {
+        dropdownMenu.classList.toggle("show");
+    });
+
+    window.addEventListener("click", (event) => {
+        if (!dropdownMenu.contains(event.target)) {
+            dropdownMenu.classList.remove("show");
+            }
+        });
+    }
+
+    // --- Checkbox toggle logic ---
+    // manually add new layers yourself, or automate this part in the fture
+    const layers = [
+        { id: "toggle-forest", selector: ".forest-layer" }
+    ];
+
+    layers.forEach(layer => {
+    const checkbox = document.getElementById(layer.id);
+    if (!checkbox) return;
+        checkbox.addEventListener("change", (e) => {
+            const visible = e.target.checked;
+            d3.select(layer.selector)
+            .style("opacity", visible ? 1 : 0);
+        });
+    });
 
 }
 
@@ -263,7 +295,36 @@ function updateLegend(mode) {
     if (legendContainer.empty()) return; // Guard clause for pages without a legend
     legendContainer.html("");
 
-    // ... (legend drawing logic from main.js would go here) ...
+    const legendData = [
+        { color: presentColor, label: "Counties of Importance" },
+        { color: absentColor,  label: "Other Counties" }
+    ];
+
+    legend.selectAll("g")
+        .data(legendData)
+    .join("g")
+        .attr("transform", (d,i) => `translate(0, ${i * 24})`)  // 24px between rows
+    .each(function(d) {
+        const g = d3.select(this);
+        g.append("rect")
+        .attr("width",  20)
+        .attr("height", 20)
+        .attr("fill",   d.color)
+        .attr("stroke", "#999");
+        g.append("text")
+        .attr("x",  26)
+        .attr("y",  14)
+        .style("font-size","12px")
+        .text(d.label);
+    });
+
+    //Title
+    // svg.append("text")
+    //     .attr("x", W/2).attr("y", 30)
+    //     .attr("text-anchor","middle")
+    //     .style("font-size","1.2rem")
+    //     .style("font-weight","600")
+    //     .text("All Counties (from data_features.csv)");
 }
 
 export default {
