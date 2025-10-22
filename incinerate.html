@@ -52,14 +52,27 @@
         <div class="grid-section">
           <button id="focus_on_state">Focus on state</button>
           <button id="reset_focus">Reset focus from state</button>
-          <!-- in the future we can sub "state" for the actual state name -->
+
           <div id="layer-dropdown" class="dropdown">
             <button id="layer-toggle-btn" class="dropdown-btn">Layers ▾</button>
             <div id="layer-menu" class="dropdown-content">
               <label><input type="checkbox" id="toggle-forest" checked> Forest Layer</label><br>
-              <!-- Add more layers later -->
             </div>
           </div>
+
+          <!-- Wildfire Simulation Panel -->
+          <section id="wildfire-sim-container">
+            <h3>Wildfire Simulation</h3>
+            <canvas id="wildfire-canvas" width="300" height="300"
+                    style="border:1px solid #aaa; margin-bottom:8px;"></canvas>
+            <div id="wildfire-legend" style="margin-bottom:8px; font-size:12px;">
+              <div><span style="display:inline-block;width:12px;height:12px;background:orange;margin-right:4px;"></span>Burning</div>
+              <div><span style="display:inline-block;width:12px;height:12px;background:brown;margin-right:4px;"></span>Burnt</div>
+              <div><span style="display:inline-block;width:12px;height:12px;background:green;margin-right:4px;"></span>Not burnt</div>
+              <div><span style="display:inline-block;width:12px;height:12px;background:white;margin-right:4px;"></span>Empty</div>
+            </div>
+            <button id="run-wildfire-sim">Run Simulation</button>
+          </section>
         </div>
       </div>
     </div>

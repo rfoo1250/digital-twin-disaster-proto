@@ -107,43 +107,14 @@ function addTooltip(canvas, gridSize, cellSize, timesteps, getStepIndex) {
 }
 
 function init() {
-    let container = document.getElementById('wildfire-sim-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'wildfire-sim-container';
-        container.style.position = 'absolute';
-        container.style.top = '10px';
-        container.style.right = '10px';
-        container.style.padding = '10px';
-        container.style.background = 'rgba(255,255,255,0.9)';
-        container.style.border = '1px solid #ccc';
-        container.style.fontFamily = 'monospace';
-        document.body.appendChild(container);
-    }
-
-    container.innerHTML = `
-        <h3>Wildfire Simulation</h3>
-        <canvas id='wildfire-canvas' width='300' height='300' style='border:1px solid #aaa; margin-bottom:8px;'></canvas>
-        <div id='wildfire-legend' style='margin-bottom:8px; font-size: 12px;'></div>
-        <button id='restart-wildfire'>Run Simulation</button>
-    `;
-
+    const container = document.getElementById('wildfire-sim-container');
     const canvas = container.querySelector('#wildfire-canvas');
-    const legend = container.querySelector('#wildfire-legend');
-    const restartBtn = container.querySelector('#restart-wildfire');
+    const runBtn = container.querySelector('#run-wildfire-sim');
 
-    legend.innerHTML = `
-        <div><span style="display:inline-block;width:12px;height:12px;background:orange;margin-right:4px;"></span>Burning</div>
-        <div><span style="display:inline-block;width:12px;height:12px;background:brown;margin-right:4px;"></span>Burnt</div>
-        <div><span style="display:inline-block;width:12px;height:12px;background:green;margin-right:4px;"></span>Not burnt</div>
-        <div><span style="display:inline-block;width:12px;height:12px;background:white;margin-right:4px;"></span>Empty</div>
-    `;
-
-    restartBtn.addEventListener('click', () => {
+    runBtn.addEventListener('click', () => {
         startSimulation(canvas);
     });
 
-    startSimulation(canvas);
 }
 
 export default {

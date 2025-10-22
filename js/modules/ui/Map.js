@@ -135,6 +135,7 @@ function drawMapDefault() {
         .datum(getForestFeature()) // get from DataManager / state
         .attr("d", pathGen)
         .attr("fill", "darkgreen")
+        .attr("fill-rule", "evenodd")
         .attr("opacity", 0.8)
         .attr("stroke", "black")
         .attr("stroke-width", 0.5);
