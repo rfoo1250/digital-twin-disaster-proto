@@ -4,6 +4,7 @@ import traceback
 
 from simulation.engine import run_scm_counterfactual_simulation
 from wildfire_sim.incinerate import run_wildfire_simulation
+import state as app_state
 from config import VALID_DAG_KEYS
 
 logger = logging.getLogger(__name__)
@@ -88,11 +89,14 @@ def register_routes(app):
         try:
             logger.info("Running wildfire simulation")
 
-            forest_shape = None
             # accept optional JSON payload that may include forestShape
+            forest_shape = None
             if request.is_json:
                 data = request.get_json()
                 forest_shape = data.get('forestShape')
+                # store the shape in the app-wide SSOT so other modules can access it
+                if forest_shape is not None:
+                    app_state.set_forest_shape(forest_shape)
             else:
                 # If there is a body but it's not JSON, reject it
                 if request.data and len(request.data) > 0:
@@ -100,8 +104,8 @@ def register_routes(app):
 
             result = run_wildfire_simulation(forest_shape=forest_shape)
 
-            # attach provided forest shape (if any) so frontend can clip/draw the polygon
-            # if forest_shape:
+            # attach stored forest shape back into the response for the frontend
+            # if forest_shape is not None:
             #     result['forestFeature'] = forest_shape
 
             return jsonify(result)

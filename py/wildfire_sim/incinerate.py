@@ -4,6 +4,7 @@ import random as rnd
 import networkx as nx
 import logging
 from matplotlib.path import Path
+from wildfire_sim.create_forest import get_point_in_forest
 
 from config import ROOSEVELT_FOREST_COVER_CSV
 
@@ -16,14 +17,15 @@ NODES = 50*50
 DENSITY_FACTOR = 0.95
 MAX_WIND_SPEED = 40
 THETA_FACTOR = 0.2
-PP_FACTOR = 5
-EMBER_PROB = 0.04           # per-burning-node chance to create an ember (long-range spark)
-EMBER_RADIUS = 7          # radius in grid cells for ember target search
-THRESHOLD_NOISE_LOW = 0.6  # multiplicative noise range for node thresholds
+PP_FACTOR = 2
+EMBER_PROB = 0.02           # per-burning-node chance to create an ember (long-range spark)
+EMBER_RADIUS = 5            # radius in grid cells for ember target search
+THRESHOLD_NOISE_LOW = 0.6   # multiplicative noise range for node thresholds
 THRESHOLD_NOISE_HIGH = 1.4
 EDGE_WEIGHT_NOISE_LOW = 0.6
 EDGE_WEIGHT_NOISE_HIGH = 1.6
 TIMESTEPS = 1000
+# TODO: allow for a user set ignition point by node ID
 IGNITION_POINT = "random"
 
 logger = logging.getLogger(__name__)
@@ -243,7 +245,6 @@ def simulate_wind(g, edge_list, max_speed, epsilon, dist_scale):
 # =========================================================================
 
 def run_wildfire_simulation(forest_shape=None):
-    print("[DEBUG] forestShape param:", forest_shape)
     logger.info(" Starting wildfire simulation (HTTP mode)")
     print(f"[DEBUG] Attempting to load dataset from: {CSV_FILE}")
     try:
@@ -260,125 +261,10 @@ def run_wildfire_simulation(forest_shape=None):
     pos_dict = {}
     aspect_dict = {'N': -0.063, 'NE':0.349, 'E':0.686, 'SE':0.557, 'S':0.039, 'SW':-0.155, 'W':-0.252, 'NW':-0.171}
 
-    # Helper: create a point-in-forest predicate from a provided forest_shape.
-    # Accepts GeoJSON-like dicts (Feature/Geometry), a list of (x,y) coords (polygon),
-    # or any object with a .contains(Point) method (e.g., shapely geometry).
-    # Assumption: the coordinates in `forest_shape` are in the same coordinate
-    # space as the generated grid positions (i*scale, j*scale).
-    def make_point_in_forest(shape_obj):
-        if not shape_obj:
-            return None
-
-        # If it's a Feature with geometry
-        if isinstance(shape_obj, dict) and shape_obj.get('type') == 'Feature':
-            shape_obj = shape_obj.get('geometry')
-
-        # If it's a GeoJSON geometry (lon/lat), project it into the simulation grid
-        # coordinate space so point-in-polygon tests work with `current_pos` = (i*scale, j*scale).
-        if isinstance(shape_obj, dict) and shape_obj.get('type') in ('Polygon', 'MultiPolygon'):
-            geom_type = shape_obj.get('type')
-            coords = shape_obj.get('coordinates', [])
-            polygons = []
-            if geom_type == 'Polygon' and coords:
-                polygons.append(coords[0])
-            elif geom_type == 'MultiPolygon' and coords:
-                for poly in coords:
-                    if poly:
-                        polygons.append(poly[0])
-
-            # collect raw lon/lat points across all rings to compute bbox
-            all_pts = []
-            for poly in polygons:
-                for lon, lat in poly:
-                    all_pts.append((float(lon), float(lat)))
-
-            if not all_pts:
-                return None
-
-            lon_vals = [p[0] for p in all_pts]
-            lat_vals = [p[1] for p in all_pts]
-            lon_min, lon_max = min(lon_vals), max(lon_vals)
-            lat_min, lat_max = min(lat_vals), max(lat_vals)
-
-            # grid coordinate range (match how nodes are generated: i*scale, j*scale for i,j=1..grid_size)
-            x_min = scale
-            x_max = grid_size * scale
-            y_min = scale
-            y_max = grid_size * scale
-
-            def _project(lon, lat):
-                # Preserve original shape (no non-uniform stretching): use a
-                # uniform scale so aspect ratio is maintained, then center the
-                # projected polygon inside the grid box.
-                lon_range = lon_max - lon_min
-                lat_range = lat_max - lat_min
-                x_range = x_max - x_min
-                y_range = y_max - y_min
-
-                # If both ranges are zero, just place at center
-                if lon_range == 0 and lat_range == 0:
-                    return ((x_min + x_max) / 2.0, (y_min + y_max) / 2.0)
-
-                # Determine uniform scale to preserve aspect ratio
-                if lon_range == 0:
-                    scale_u = y_range / lat_range if lat_range != 0 else 1.0
-                elif lat_range == 0:
-                    scale_u = x_range / lon_range if lon_range != 0 else 1.0
-                else:
-                    scale_u = min(x_range / lon_range, y_range / lat_range)
-
-                # Project relative positions then add centering offsets
-                proj_x = (float(lon) - lon_min) * scale_u
-                proj_y = (float(lat) - lat_min) * scale_u
-
-                total_proj_w = (lon_range if lon_range != 0 else 1.0) * scale_u
-                total_proj_h = (lat_range if lat_range != 0 else 1.0) * scale_u
-
-                offset_x = x_min + (x_range - total_proj_w) / 2.0
-                offset_y = y_min + (y_range - total_proj_h) / 2.0
-
-                x = offset_x + proj_x
-                y = offset_y + proj_y
-                return (x, y)
-
-            path_list = []
-            for poly in polygons:
-                try:
-                    proj_pts = [_project(lon, lat) for lon, lat in poly]
-                    path_list.append(Path(proj_pts))
-                except Exception:
-                    continue
-
-            if not path_list:
-                return None
-
-            def _fn(pt):
-                for p in path_list:
-                    if p.contains_point(pt):
-                        return True
-                return False
-
-            return _fn
-
-        # If it's a sequence of coordinates (outer ring)
-        if isinstance(shape_obj, (list, tuple)) and len(shape_obj) > 0 and isinstance(shape_obj[0], (list, tuple)):
-            try:
-                pts = [(float(x), float(y)) for x, y in shape_obj]
-                path = Path(pts)
-                return lambda pt: path.contains_point(pt)
-            except Exception:
-                return None
-
-        # If it has a 'contains' method (e.g., shapely geometry), use that
-        if hasattr(shape_obj, 'contains'):
-            from shapely.geometry import Point
-            def _fn_shapely(pt):
-                return bool(shape_obj.contains(Point(pt)))
-            return _fn_shapely
-
-        return None
-
-    point_in_forest = make_point_in_forest(forest_shape)
+    # Create a point-in-forest predicate using the helper module; this will
+    # use the provided override `forest_shape` if passed, otherwise it will
+    # read the latest stored shape from the SSOT in `state.py`.
+    point_in_forest = get_point_in_forest(scale, grid_size, forest_shape)
 
     if len(df) < NODES:
         nodes_count = len(df)
