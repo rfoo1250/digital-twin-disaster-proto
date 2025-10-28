@@ -131,3 +131,8 @@ function init() {
 export default {
     init
 };
+
+/**
+ * Sim2Real-Fire: A Multi-modal Simulation Dataset for Forecast and Backtracking of Real-world Forest Fire
+Part of Advances in Neural Information Processing Systems 37 (NeurIPS 2024) Datasets and Benchmarks Track
+ */
