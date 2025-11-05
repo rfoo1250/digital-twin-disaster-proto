@@ -10,7 +10,8 @@
  */
 
 // Vars
-const apiKey = "SH2x3RGMiI6d11eXYZuX"; // API key moved internal to module
+// const apiKey = "SH2x3RGMiI6d11eXYZuX"; // API key moved internal to module
+const apiKey = "JpoaHlHUOI1nu8GvzUc0"; // API key moved internal to module
 
 /**
  * Computes a bounding box from forest feature data with optional padding
