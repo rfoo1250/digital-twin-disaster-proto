@@ -22,6 +22,9 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, os.pardir))
 # Directory where wildfire outputs (GeoJSON / GeoTIFFs) can be saved
 OUTPUT_BASE = os.path.join(PROJECT_ROOT, "wildfire_output")
 
+# Directory to store temporary GEE inputs (e.g., downloaded GeoTIFFs)
+SIM_INPUT_DIR = os.path.join(PROJECT_ROOT, "simulation_inputs")
+
 # Primary dataset for wildfire simulation (forest cover CSV)
 ROOSEVELT_FOREST_COVER_CSV = os.path.join(PROJECT_ROOT, "covtype.csv")
 
