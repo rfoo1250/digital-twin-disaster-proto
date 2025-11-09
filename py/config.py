@@ -11,6 +11,10 @@ DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 5000
 DEBUG_MODE = True
 
+# ------------------ API CONFIG ------------------ #
+# Central prefix for all API routes
+API_PREFIX = "/api"
+
 # ------------------ PATHS ------------------ #
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, os.pardir))

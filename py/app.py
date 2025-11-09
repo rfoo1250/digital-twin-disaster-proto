@@ -16,6 +16,9 @@ from api.errors import register_error_handlers
 from utils.logger import configure_logging
 from config import DEFAULT_HOST, DEFAULT_PORT, DEBUG_MODE
 
+from earthengine.service import initialize_gee
+from earthengine.routes import gee_bp
+
 
 def create_app():
     """Application factory for the wildfire simulation backend."""
@@ -27,10 +30,16 @@ def create_app():
     # Configure structured logging
     configure_logging()
     logger = logging.getLogger(__name__)
-    logger.info("Starting Wildfire Simulation Backend API")
+    logger.info("Starting Backend...")
+    
+    # Authenticate and initialize GEE on startup
+    logger.info("Initializing Google Earth Engine...")
+    initialize_gee()
 
     # Register route blueprints and error handlers
+    logger.info("Registering API routes...")
     register_routes(app)
+    app.register_blueprint(gee_bp)
     register_error_handlers(app)
 
     return app
