@@ -55,7 +55,6 @@ function onEachCountyFeature(feature, layer) {
         }
 
         updateCountyLabel(`Selected: ${name}${stateCode ? ', ' + stateCode : ''}`);
-        showToast(`Selected: ${name}${stateCode ? ', ' + stateCode : ''}`);
         // console.log(`[COUNTY DEBUG] Selected: ${name}`);
 
         countyLayer.eachLayer((l) => {
@@ -84,7 +83,7 @@ async function handleCountySelectionForGEE(feature) {
 
         forestLayer = L.tileLayer(url, {
             attribution: 'Google Earth Engine — County forest cover',
-            opacity: 0.6,
+            opacity: 0.8,
         });
 
         forestLayer.on('tileload', e => console.log(`[FOREST DEBUG] Loaded: ${e.tile.src}`));
@@ -184,8 +183,19 @@ function setupLayerToggles() {
 
 /* ---------- Label ---------- */
 function updateCountyLabel(text) {
+    const COUNTY_LABEL_FLASH_DURATION = 2000; // in milliseconds
     const container = document.getElementById('county_selected_text');
-    if (container) container.textContent = text;
+    if (!container) return;
+
+    container.textContent = text;
+
+    // Add a "highlight" class briefly to draw attention
+    container.classList.add('label-flash');
+
+    // Remove it after 2 seconds (or whatever duration you want)
+    setTimeout(() => {
+        container.classList.remove('label-flash');
+    }, COUNTY_LABEL_FLASH_DURATION);
 }
 
 export default { init };
