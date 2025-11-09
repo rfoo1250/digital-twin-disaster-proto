@@ -1,18 +1,18 @@
 /**
  * DataManager.js — Leaflet version (no D3)
  * ---------------------------------------------
- * Loads GeoJSON county/state boundaries for use in the wildfire map.
+ * Loads GeoJSON county/state boundaries and handles
+ * backend interactions for wildfire simulation and GEE layers.
  */
 
 import { appState, setState } from '../state.js';
-import { runWildfireSimulation } from './ApiClient.js';
+import { runWildfireSimulation, getGEEClippedLayer } from './ApiClient.js';
 
 /**
  * Loads U.S. county/state boundaries as GeoJSON (from public CDN)
  */
 async function loadAllData() {
     try {
-        // Use pre-converted GeoJSON instead of TopoJSON
         const countiesUrl = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json";
         const response = await fetch(countiesUrl);
         const countiesGeo = await response.json();
@@ -46,6 +46,27 @@ async function loadWildfireSimulation(params) {
 }
 
 /**
+ * Fetch a clipped GEE layer URL for a specific geometry.
+ * The backend returns a tile URL that can be used directly
+ * in Leaflet via L.tileLayer(url).
+ * @param {Object} geometry - GeoJSON geometry
+ */
+async function loadGEEClippedLayer(geometry) {
+    try {
+        const url = await getGEEClippedLayer(geometry);
+        if (!url) {
+            console.warn('[WARN] No GEE URL received.');
+            return;
+        }
+
+        setState('geeLayerUrl', url);
+        console.log('[INFO] GEE layer URL stored in state:', url);
+    } catch (error) {
+        console.error('[ERROR] DataManager: Failed to load GEE layer.', error);
+    }
+}
+
+/**
  * Getter utilities
  */
 function getCountyGeoData() {
@@ -56,4 +77,15 @@ function getWildfireData() {
     return appState.wildfireData || null;
 }
 
-export { loadAllData, loadWildfireSimulation, getCountyGeoData, getWildfireData };
+function getGEEUrl() {
+    return appState.geeLayerUrl || null;
+}
+
+export {
+    loadAllData,
+    loadWildfireSimulation,
+    loadGEEClippedLayer,
+    getCountyGeoData,
+    getWildfireData,
+    getGEEUrl,
+};
