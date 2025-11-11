@@ -1,0 +1,26 @@
+{
+    "name": "digital-twin-disaster-proto",
+    "version": "1.0.0",
+    "description": "A prototype for digital twin disaster",
+    "main": "js/app.js",
+    "scripts": {
+        "dev": "vite",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git@github-first:rfoo1250/digital-twin-disaster-proto.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "dependencies": {
+        "georaster": "^1.6.0",
+        "georaster-layer-for-leaflet": "^4.1.2",
+        "leaflet": "^1.9.4"
+    },
+    "devDependencies": {
+        "vite": "^7.2.2"
+    }
+}

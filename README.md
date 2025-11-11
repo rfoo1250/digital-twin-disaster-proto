@@ -2,6 +2,11 @@
 
 🚧 CHANGES NEEDED 🚧
 
+Add:
+node modules added
+vite used for simplicity
+audit fix, vulnarabilities
+
 ## Running the Demo Locally
 
 ### 1. Clone the repository
