@@ -1,5 +1,6 @@
 // simple toast for ux feedback on lasso
-const TOAST_SHOW_TIME = 3000; // milliseconds
+import CONFIG from '../../config.js';
+const TOAST_SHOW_TIME = CONFIG.TOAST_SHOW_TIME || 3000;
 
 export function showToast(msg, isError = false) {
     const toast = document.getElementById("toast");

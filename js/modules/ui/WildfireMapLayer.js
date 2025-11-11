@@ -1,7 +1,7 @@
 // js/modules/ui/WildfireMapLayer.js
 // Map layer module for the wildfire simulation.
 // Handles static map background loading and boundary computation.
-
+// NOT USING THIS ANYMORE,
 /**
  * TODO:
  * rename this damn file name

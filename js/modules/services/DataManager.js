@@ -5,16 +5,17 @@
  * backend interactions for wildfire simulation and GEE layers.
  */
 
+import CONFIG from '../../config.js';
 import { appState, setState } from '../state.js';
 import { runWildfireSimulation, getGEEClippedLayer } from './ApiClient.js';
-
 /**
  * Loads U.S. county/state boundaries as GeoJSON (from public CDN)
  */
 async function loadAllData() {
     try {
-        const countiesUrl = "https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json";
-        const response = await fetch(countiesUrl);
+        // const countiesUrl = CONFIG.COUNTY_GEOJSON_URL;
+        // const response = await fetch(countiesUrl);
+        const response = await fetch(CONFIG.COUNTY_GEOJSON_URL);
         const countiesGeo = await response.json();
 
         const allData = { countiesGeo };

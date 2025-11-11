@@ -1,7 +1,7 @@
 // js/modules/ui/WildfireMapLayer.js
 // Map layer module for the wildfire simulation.
 // Handles static map background loading and boundary computation.
-
+// NOT USING THIS ANYMORE,
 /**
  * TODO:
  * rename this damn file name
@@ -9,9 +9,10 @@
  * handle data in datamaanger
  */
 
+import CONFIG from '../../config.js';
 // Vars
 // const apiKey = "SH2x3RGMiI6d11eXYZuX"; // API key moved internal to module
-const apiKey = "JpoaHlHUOI1nu8GvzUc0"; // API key moved internal to module
+const apiKey = CONFIG.MAPTILER_API_KEY;
 
 /**
  * Computes a bounding box from forest feature data with optional padding
