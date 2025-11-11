@@ -8,7 +8,7 @@
 // - Behavior notes: empty cells (state==='empty') are skipped (transparent).
 // - Disabled features: forest clipping and tooltips a  qre intentionally left commented out.
 // - TODOs: add legend drawing, make playback speed configurable, use requestAnimationFrame for smooth anim, optimize large-grid redraws.
-
+import CONFIG from '../../config.js';
 import { loadWildfireSimulation, getWildfireData, getForestFeature } from "../services/DataManager.js";
 import { appState } from "../state.js";
 import { computeBoundingBox, loadMapBackground } from './WildfireMapLayer1.js';
@@ -74,7 +74,7 @@ async function startSimulation(canvas) {
 
         stepIndex++;
         if (stepIndex < timesteps.length) {
-            setTimeout(drawStep, 500);
+            setTimeout(drawStep, CONFIG.WILDFIRE_STEP_DELAY);
         }
     }
 

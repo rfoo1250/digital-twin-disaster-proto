@@ -5,8 +5,8 @@
  * for the Wildfire Simulation and GEE operations.
  */
 
-const LOCAL_API_BASE_URL = 'http://127.0.0.1:5000';
-
+import CONFIG from '../../config.js';
+// const LOCAL_API_BASE_URL = 'http://127.0.0.1:5000';
 /**
  * Run wildfire simulation.
  * Sends ignition coordinates to the backend and returns simulation results.
@@ -14,8 +14,10 @@ const LOCAL_API_BASE_URL = 'http://127.0.0.1:5000';
  * @returns {Promise<Object|null>} - Parsed wildfire simulation response
  */
 async function runWildfireSimulation(params) {
+    const wildfireSimEndpoint = `${CONFIG.API_BASE_URL}/simulate`;
+
     try {
-        const response = await fetch(`${LOCAL_API_BASE_URL}/api/simulate`, {
+        const response = await fetch(wildfireSimEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(params),
@@ -38,8 +40,9 @@ async function runWildfireSimulation(params) {
  * @returns {Promise<string|null>} - Tile URL string
  */
 async function getGEEClippedLayer(geometry) {
+    const GEELayerEndpoint = `${CONFIG.API_BASE_URL}/get_layer`;
     try {
-        const response = await fetch(`${LOCAL_API_BASE_URL}/api/get_layer`, {
+        const response = await fetch(GEELayerEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ geometry }),
