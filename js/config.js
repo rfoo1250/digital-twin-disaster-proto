@@ -38,7 +38,7 @@ const CONFIG = {
     // ------------------ DATA ------------------ //
     COUNTY_GEOJSON_URL:
         'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json',
-    GEE_TIFF_BASE_URL: '/data/geotiffs/',
+    CUR_COUNTY_GEOTIFF_FOLDER: '/data/shared/geotiff/',
 
     // ------------------ ENVIRONMENTS ------------------ //
     // ENV: import.meta?.env?.MODE || 'development',

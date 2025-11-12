@@ -12,3 +12,15 @@ export const fipsToState = {
     "50": "VT", "51": "VA", "53": "WA", "54": "WV", "55": "WI",
     "56": "WY"
 };
+
+export const DYNAMIC_WORLD_PALETTE = [
+    '#419BDF',  // 0: Water
+    '#397D49',  // 1: Trees
+    '#88B053',  // 2: Grass
+    '#7A87C6',  // 3: Flooded Vegetation
+    '#E49635',  // 4: Crops
+    '#DFC35A',  // 5: Shrub and Scrub
+    '#C4281B',  // 6: Built
+    '#A59B8F',  // 7: Bare
+    '#B39FE1'   // 8: Snow and Ice
+];

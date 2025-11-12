@@ -1,9 +1,9 @@
 // Map.js
 
-import CONFIG from '../../config.js';
-import { getCountyGeoData, loadGEEClippedLayer, getGEEUrl } from '../services/DataManager.js';
-import { fipsToState, DYNAMIC_WORLD_PALETTE } from '../../utils/constants.js';
-import { showToast } from '../../utils/toast.js';
+// import CONFIG from '../../config.js';
+// import { getCountyGeoData, loadGEEClippedLayer, getGEEUrl } from '../services/DataManager.js';
+// import { fipsToState, DYNAMIC_WORLD_PALETTE } from '../../utils/constants.js';
+// import { showToast } from '../../utils/toast.js';
 
 /**
  * I will handle the double click function to zoom in on a county when clicked myself
@@ -73,36 +73,90 @@ function onEachCountyFeature(feature, layer) {
 async function handleCountySelectionForGEE(feature) {
     try {
         await loadGEEClippedLayer(feature.geometry);
-        const url = getGEEUrl();
-        if (!url) {
-            console.warn('[GEE WARN] No URL returned.');
-            showToast('No forest layer available.');
+        const geeUrlOrFile = getGEEUrl();
+
+        if (!geeUrlOrFile) {
+            console.warn('[GEE WARN] No URL or GeoTIFF file info available.');
+            showToast('No layer information found.');
             return;
         }
 
-        // Remove old layer if any
+        // Remove any existing layer
         if (landCoverLayer) {
-            try { map.removeLayer(landCoverLayer); } catch {}
+            try { map.removeLayer(landCoverLayer); } catch { }
             landCoverLayer = null;
         }
 
-        landCoverLayer = L.tileLayer(url, {
-            attribution: 'Google Earth Engine — County forest cover',
-            opacity: 0.8,
-        });
+        // Build expected GeoTIFF file path (e.g., /data/geotiffs/county_06037.tif)
+        let tiffPath = geeUrlOrFile.endsWith('.tif')
+            ? `${CUR_COUNTY_GEOTIFF_FOLDER}${geeUrlOrFile}`
+            : `${CUR_COUNTY_GEOTIFF_FOLDER}${geeUrlOrFile}.tif`;
 
-        landCoverLayer.on('tileload', e => console.log(`[FOREST DEBUG] Loaded: ${e.tile.src}`));
+        console.log(`[GEE INFO] Checking for GeoTIFF at: ${tiffPath}`);
 
-        const landCoverCheckbox = document.getElementById('toggle-land-cover');
-        if (isFocused && landCoverCheckbox && landCoverCheckbox.checked) {
-            landCoverLayer.addTo(map);
-            showToast('Forest cover loaded for focused county.');
-        } else {
-            console.log('[GEE DEBUG] Forest layer cached but not added (focus or toggle inactive).');
+        let tiffLoaded = false;
+        try {
+            const headResp = await fetch(tiffPath, { method: 'HEAD' });
+            if (headResp.ok) {
+                console.log('[GEE INFO] GeoTIFF file found, loading...');
+                const resp = await fetch(tiffPath);
+                const buffer = await resp.arrayBuffer();
+                const georaster = await parseGeoraster(buffer);
+
+                landCoverLayer = new GeoRasterLayer({
+                    georaster,
+                    opacity: CONFIG.DEFAULT_FOREST_OPACITY,
+                    pixelValuesToColorFn: (values) => {
+                        const val = values[0]; // This is the class, e.g., 0, 1, 2... 8
+
+                        // Check for null/nodata or out-of-bounds
+                        if (val === null || val < 0 || val > 8) {
+                            return null; // Make it transparent
+                        }
+                        
+                        // Return the corresponding color from the palette
+                        return DYNAMIC_WORLD_PALETTE[val];
+                    },
+                });
+
+                landCoverLayer.addTo(map);
+                showToast('GeoTIFF layer loaded locally.');
+                tiffLoaded = true;
+            } else {
+                console.log('[GEE INFO] GeoTIFF not found, falling back to GEE tile URL.');
+            }
+        } catch (err) {
+            console.warn('[GEE WARN] GeoTIFF fetch failed, falling back to GEE tile.', err);
         }
+
+        if (!tiffLoaded) {
+            console.log('[GEE INFO] Loading dynamic GEE layer...');
+            const tileUrl = geeUrlOrFile.startsWith('http')
+                ? geeUrlOrFile
+                : await getGEEUrl();
+
+            if (!tileUrl) {
+                console.warn('[GEE WARN] No GEE tile URL found.');
+                showToast('No layer available.');
+                return;
+            }
+
+            landCoverLayer = L.tileLayer(tileUrl, {
+                attribution: 'Google Earth Engine — dynamic tiles',
+                opacity: CONFIG.DEFAULT_FOREST_OPACITY,
+            });
+
+            if (isFocused) {
+                landCoverLayer.addTo(map);
+                showToast('Dynamic GEE layer loaded.');
+            } else {
+                console.log('[GEE DEBUG] Layer cached but not added (not focused).');
+            }
+        }
+
     } catch (error) {
-        console.error('[GEE ERROR] Failed to load forest layer:', error);
-        showToast('Failed to load forest layer.');
+        console.error('[GEE ERROR] Failed to load GEE/GeoTIFF layer:', error);
+        showToast('Error loading map layer.');
     }
 }
 
