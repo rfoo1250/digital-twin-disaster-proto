@@ -7,9 +7,14 @@ Defines and registers all API blueprints for the application.
 from flask import Blueprint, request, jsonify
 import logging
 import traceback
+import json
+import os
 
 # 1. Import the central prefix
-from config import API_PREFIX
+from config import (
+    API_PREFIX,
+    FOREST_GEOJSON_DIR
+)
 
 # 2. Import your new GEE blueprint
 from earthengine.routes import gee_bp 
@@ -27,22 +32,24 @@ def health_check():
     """Health check endpoint."""
     return jsonify({'status': 'healthy', 'message': 'Wildfire API is running'})
 
-@api_bp.route('/simulate', methods=['POST'])  # <-- Note: /api prefix removed
+
+@api_bp.route('/simulate_wildfire', methods=['GET'])
 def simulate_wildfire():
-    """Run the wildfire simulation using the ignition point (lat/lng)."""
+    """Run wildfire simulation based on local GeoJSON from FOREST_GEOJSON_DIR using countyKey."""
     try:
-        if not request.is_json:
-            return jsonify({'error': 'Content-Type must be application/json'}), 400
+        county_key = request.args.get('countyKey')
+        if not county_key:
+            return jsonify({'error': 'Missing required query parameter: countyKey'}), 400
 
-        data = request.get_json()
-        lat = data.get('lat')
-        lng = data.get('lng')
+        local_file_path = os.path.join(FOREST_GEOJSON_DIR, f"{county_key}.geojson")
+        if not os.path.exists(local_file_path):
+            return jsonify({'error': f'GeoJSON not found for countyKey: {county_key}', 'path': local_file_path}), 404
 
-        if lat is None or lng is None:
-            return jsonify({'error': 'Missing required parameters: lat and lng'}), 400
+        with open(local_file_path, 'r', encoding='utf-8') as f:
+            forest_geojson = json.load(f)
 
-        logger.info(f"Running wildfire simulation for point: ({lat}, {lng})")
-        result = run_wildfire_simulation(lat, lng)
+        logger.info(f"Running wildfire simulation for county: {county_key} (GeoJSON: {local_file_path})")
+        result = run_wildfire_simulation(forest_shape=forest_geojson)
 
         return jsonify(result)
 

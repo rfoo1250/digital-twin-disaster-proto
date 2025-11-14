@@ -58,9 +58,15 @@ async function loadGEEClippedLayer(geometry) {
  * @param {string} countyName - Name of the county (e.g., "Maricopa")
  * @param {string} stateAbbr - State abbreviation (e.g., "AZ")
  */
-async function startForestDataExport(geometry, countyName, stateAbbr) {
+async function startForestDataExport(geometry) {
     try {
-        const countyKey = `${countyName}_${stateAbbr}`;
+        const countyName = getCurrrentCountyName();
+        const stateAbbr = getCurrentStateAbbr();
+        const countyKey = getCurrentCountyKey();
+        if (!countyKey) {
+            // need fixing
+            throw new Error("County key is undefined. Cannot start export.");
+        }
         // Optimistically set a pending state
         setState('currentExportTask', { id: null, countyKey: countyKey, status: 'PENDING', localPath: null });
         
@@ -107,6 +113,8 @@ async function startForestDataExport(geometry, countyName, stateAbbr) {
  */
 async function checkForestDataStatus() {
     const task = appState.currentExportTask;
+    // TODO: should change this to current selected county
+    // get countyKey, check if it matches, run
 
     if (!task || !task.status || task.status === 'NONE') {
         console.warn('[WARN] No export task is active. Cannot check status.');
@@ -166,6 +174,24 @@ async function checkForestDataStatus() {
     }
 }
 
+function setCurrentCountyNameAndStateAbbr(countyName, stateAbbr) {
+    setState('currentCountyName', countyName);
+    setState('currentStateAbbr', stateAbbr);
+}
+
+function getCurrrentCountyName() {
+    return appState.currentCountyName || null;
+}
+
+function getCurrentStateAbbr() {
+    return appState.currentStateAbbr || null;
+}
+
+function getCurrentCountyKey() {
+    if (!getCurrrentCountyName() || !getCurrentStateAbbr()) return null;
+    return `${getCurrrentCountyName()}_${getCurrentStateAbbr()}`;
+}
+
 function getCountyGeoData() {
     return appState.allData?.countiesGeo || null;
 }
@@ -197,4 +223,8 @@ export {
     getGEEUrl,
     getCurrentGEEForestGeoJSON,
     getForestExportStatus,
+    setCurrentCountyNameAndStateAbbr,
+    getCurrrentCountyName,
+    getCurrentStateAbbr,
+    getCurrentCountyKey
 };

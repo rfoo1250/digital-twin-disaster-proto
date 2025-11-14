@@ -14,7 +14,14 @@ except Exception:
         from .. import state as app_state
     except Exception:
         # fallback: local import (works if PYTHONPATH or CWD contains py/)
-        import state as app_state
+        try:
+            import state as app_state
+        except ImportError:
+            # If state isn't available, create a dummy object for get_forest_shape
+            class DummyState:
+                def get_forest_shape(self):
+                    return None
+            app_state = DummyState()
 
 
 def make_point_in_forest(shape_obj, scale, grid_size):

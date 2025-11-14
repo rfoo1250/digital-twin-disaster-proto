@@ -14,17 +14,18 @@ import CONFIG from '../../config.js';
  * @param {{ lat: number, lng: number }} params - Ignition point coordinates
  * @returns {Promise<Object|null>} - Parsed wildfire simulation response
  */
-async function runWildfireSimulation(params) {
-    const wildfireSimEndpoint = `${CONFIG.API_BASE_URL}/simulate`;
-
+async function runWildfireSimulation(countyKey) {
+    const wildfireSimEndpoint = `${CONFIG.API_BASE_URL}/simulate_wildfire?countyKey=${countyKey}`;
+    // `${CONFIG.API_BASE_URL}/check-status/${taskId}?countyKey=${countyKey}`
     try {
+        console.log(`[INFO] Starting wildfire sim for countyKey=${countyKey}`);
         const response = await fetch(wildfireSimEndpoint, {
-            method: 'POST',
+            method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(params),
         });
 
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
         return await response.json();
     } catch (error) {
         console.error('[API Error] Wildfire Simulation:', error);
@@ -82,11 +83,11 @@ async function startForestExport(geometry, countyName, stateAbbr) {
             // Send all info needed for caching
             body: JSON.stringify({ geometry, countyName, stateAbbr }),
         });
-        
+
         // A 200 (OK) means a cache hit.
         // A 202 (Accepted) means the task is processing.
         if (!response.ok) {
-             throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
         return await response.json();
     } catch (error) {
@@ -102,7 +103,7 @@ async function startForestExport(geometry, countyName, stateAbbr) {
  * @returns {Promise<Object|null>} - Status response object
  */
 async function checkExportStatus(taskId, countyKey) {
-        // We add the countyKey as a URL query parameter.
+    // We add the countyKey as a URL query parameter.
     const checkStatusEndpoint = `${CONFIG.API_BASE_URL}/check-status/${taskId}?countyKey=${countyKey}`;
     try {
         const response = await fetch(checkStatusEndpoint, {
@@ -110,7 +111,7 @@ async function checkExportStatus(taskId, countyKey) {
             headers: { 'Content-Type': 'application/json' },
         });
         if (!response.ok) {
-             throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
         return await response.json();
     } catch (error) {
@@ -119,8 +120,8 @@ async function checkExportStatus(taskId, countyKey) {
     }
 }
 
-export { 
-    runWildfireSimulation, 
+export {
+    runWildfireSimulation,
     getGEEClippedLayer,
     startForestExport,
     checkExportStatus

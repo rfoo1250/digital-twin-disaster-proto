@@ -4,9 +4,12 @@ import {
     loadGEEClippedLayer,
     getGEEUrl,
     startForestDataExport,
-    checkForestDataStatus,        // <-- ADDED
-    getCurrentGEEForestGeoJSON  // <-- ADDED
+    checkForestDataStatus,
+    getCurrentGEEForestGeoJSON,
+    setCurrentCountyNameAndStateAbbr,
+    getCurrentCountyKey
 } from '../services/DataManager.js';
+import { runWildfireSimulation } from '../services/APIClient.js';
 import { fipsToState } from '../../utils/constants.js';
 import { showToast } from '../../utils/toast.js';
 
@@ -80,9 +83,12 @@ async function handleCountySelectionForGEE(feature) {
 
         console.log(`[INFO] Initiating GEE tasks for: ${countyName}, ${stateAbbr}`);
         
+        // should go hand in hand
+        setCurrentCountyNameAndStateAbbr(countyName, stateAbbr);
+
         await Promise.all([
             loadGEEClippedLayer(feature.geometry),
-            startForestDataExport(feature.geometry, countyName, stateAbbr)
+            startForestDataExport(feature.geometry)
         ]);
 
         console.log('[INFO] GEE tasks initiated.');
@@ -181,6 +187,8 @@ function setupButtons() {
                     const filePath = getCurrentGEEForestGeoJSON();
                     console.log(`[INFO] Forest data is ready at: ${filePath}. Starting simulation...`);
                     showToast('Forest data is ready. Starting simulation...', false); // false = not an error
+
+                    runWildfireSimulation(getCurrentCountyKey());
 
                     // --- As requested, placeholder for simulation start ---
                     // startActualSimulation(filePath); 

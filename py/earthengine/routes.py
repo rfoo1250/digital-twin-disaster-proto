@@ -119,9 +119,11 @@ def check_export_status(task_id):
     if not task_id:
         return jsonify({"error": "task_id is required"}), 400
     
-    county_key = request.args.get('countyKey')
-    
     try:
+        county_key = request.args.get('countyKey')
+        if not county_key:
+            return jsonify({'error': 'Missing required query parameter: countyKey'}), 400
+
         status_result = get_task_status(task_id) # Use GEE-generated task_id
         task_status = status_result.get('status')
         
