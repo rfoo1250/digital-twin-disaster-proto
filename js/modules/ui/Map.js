@@ -1,26 +1,22 @@
-// Map.js
-
 import CONFIG from '../../config.js';
-import { getCountyGeoData, loadGEEClippedLayer, getGEEUrl } from '../services/DataManager.js';
+import {
+    getCountyGeoData,
+    loadGEEClippedLayer,
+    getGEEUrl,
+    startForestDataExport,
+    checkForestDataStatus,        // <-- ADDED
+    getCurrentGEEForestGeoJSON  // <-- ADDED
+} from '../services/DataManager.js';
 import { fipsToState } from '../../utils/constants.js';
 import { showToast } from '../../utils/toast.js';
-
-/**
- * I will handle the double click function to zoom in on a county when clicked myself
- * 
- * caching the forest layer tile layer is a good idea too
- * 
- */
 
 let map, countyLayer, forestLayer;
 let selectedCounty = null;
 let isFocused = false;
-const GEE_TIFF_BASE_URL = CONFIG.GEE_TIFF_BASE_URL;
 
 function init() {
     console.log('[INFO] Initializing Leaflet map...');
 
-    // map = L.map('map').setView([37.8, -96], 4);
     map = L.map('map').setView(CONFIG.MAP_DEFAULT_CENTER, CONFIG.MAP_DEFAULT_ZOOM);
 
     L.tileLayer(CONFIG.TILE_LAYER_URL, {
@@ -50,7 +46,7 @@ const dimCountyStyle = { color: '#999', weight: 0.5, opacity: 0.2, fillOpacity: 
 function onEachCountyFeature(feature, layer) {
     layer.on('click', () => {
         selectedCounty = layer;
-        isFocused = false; // reset focus whenever user changes county
+        isFocused = false;
 
         const name = feature.properties.NAME || 'Unknown';
         let stateCode = '';
@@ -60,7 +56,6 @@ function onEachCountyFeature(feature, layer) {
         }
 
         updateCountyLabel(`Selected: ${name}${stateCode ? ', ' + stateCode : ''}`);
-        // console.log(`[COUNTY DEBUG] Selected: ${name}`);
 
         countyLayer.eachLayer((l) => {
             if (l === layer) l.setStyle(highlightCountyStyle);
@@ -72,87 +67,51 @@ function onEachCountyFeature(feature, layer) {
 /* ---------- Fetch and display GEE layer when focused ---------- */
 async function handleCountySelectionForGEE(feature) {
     try {
-        await loadGEEClippedLayer(feature.geometry);
-        const geeUrlOrFile = getGEEUrl();
-
-        if (!geeUrlOrFile) {
-            console.warn('[GEE WARN] No URL or GeoTIFF file info available.');
-            showToast('No layer information found.');
+        const countyName = feature.properties.NAME || 'Unknown';
+        let stateAbbr = '';
+        if (feature.properties.STATE) {
+            const fipsCode = feature.properties.STATE.toString().padStart(2, '0');
+            stateAbbr = fipsToState[fipsCode] || fipsCode;
+        }
+        if (countyName === 'Unknown' || stateAbbr === '') {
+            showToast('Cannot identify selected county. Please try again.', true);
             return;
         }
 
-        // Remove any existing layer
+        console.log(`[INFO] Initiating GEE tasks for: ${countyName}, ${stateAbbr}`);
+        
+        await Promise.all([
+            loadGEEClippedLayer(feature.geometry),
+            startForestDataExport(feature.geometry, countyName, stateAbbr)
+        ]);
+
+        console.log('[INFO] GEE tasks initiated.');
+
+        const url = getGEEUrl();
+        if (!url) {
+            console.warn('[GEE WARN] No URL returned.');
+            showToast('No forest layer available.');
+            return;
+        }
         if (forestLayer) {
             try { map.removeLayer(forestLayer); } catch { }
             forestLayer = null;
         }
-
-        // Build expected GeoTIFF file path (e.g., /data/geotiffs/county_06037.tif)
-        let tiffPath = geeUrlOrFile.endsWith('.tif')
-            ? `${GEE_TIFF_BASE_URL}${geeUrlOrFile}`
-            : `${GEE_TIFF_BASE_URL}${geeUrlOrFile}.tif`;
-
-        console.log(`[GEE INFO] Checking for GeoTIFF at: ${tiffPath}`);
-
-        let tiffLoaded = false;
-        try {
-            const headResp = await fetch(tiffPath, { method: 'HEAD' });
-            if (headResp.ok) {
-                console.log('[GEE INFO] GeoTIFF file found, loading...');
-                const resp = await fetch(tiffPath);
-                const buffer = await resp.arrayBuffer();
-                const georaster = await parseGeoraster(buffer);
-
-                forestLayer = new GeoRasterLayer({
-                    georaster,
-                    opacity: CONFIG.DEFAULT_FOREST_OPACITY,
-                    pixelValuesToColorFn: (values) => {
-                        const val = values[0];
-                        if (val === null) return null;
-                        // simple palette mapping: low values -> brown, high -> green
-                        const g = Math.min(255, Math.max(0, val));
-                        return `rgb(${255 - g}, ${g}, 80)`;
-                    },
-                });
-
-                forestLayer.addTo(map);
-                showToast('GeoTIFF layer loaded locally.');
-                tiffLoaded = true;
-            } else {
-                console.log('[GEE INFO] GeoTIFF not found, falling back to GEE tile URL.');
-            }
-        } catch (err) {
-            console.warn('[GEE WARN] GeoTIFF fetch failed, falling back to GEE tile.', err);
+        forestLayer = L.tileLayer(url, {
+            attribution: 'Google Earth Engine — County forest cover',
+            opacity: CONFIG.DEFAULT_FOREST_OPACITY,
+        });
+        forestLayer.on('tileload', e => console.log(`[FOREST DEBUG] Loaded: ${e.tile.src}`));
+        const forestCheckbox = document.getElementById('toggle-forest');
+        if (isFocused && forestCheckbox && forestCheckbox.checked) {
+            forestLayer.addTo(map);
+            showToast('Forest cover loaded for focused county.');
+        } else {
+            console.log('[GEE DEBUG] Forest layer cached but not added (focus or toggle inactive).');
         }
-
-        if (!tiffLoaded) {
-            console.log('[GEE INFO] Loading dynamic GEE layer...');
-            const tileUrl = geeUrlOrFile.startsWith('http')
-                ? geeUrlOrFile
-                : await getGEEUrl();
-
-            if (!tileUrl) {
-                console.warn('[GEE WARN] No GEE tile URL found.');
-                showToast('No layer available.');
-                return;
-            }
-
-            forestLayer = L.tileLayer(tileUrl, {
-                attribution: 'Google Earth Engine — dynamic tiles',
-                opacity: CONFIG.DEFAULT_FOREST_OPACITY,
-            });
-
-            if (isFocused) {
-                forestLayer.addTo(map);
-                showToast('Dynamic GEE layer loaded.');
-            } else {
-                console.log('[GEE DEBUG] Layer cached but not added (not focused).');
-            }
-        }
-
     } catch (error) {
-        console.error('[GEE ERROR] Failed to load GEE/GeoTIFF layer:', error);
-        showToast('Error loading map layer.');
+        console.error('[GEE ERROR] Failed to load forest layer:', error);
+        showToast('Failed to load forest layer.', true);
     }
 }
 
@@ -160,19 +119,21 @@ async function handleCountySelectionForGEE(feature) {
 function setupButtons() {
     const focusBtn = document.getElementById('focus-on-county');
     const resetBtn = document.getElementById('reset-focus');
+    const startWildfireSimBtn = document.getElementById('start-wildfire-sim'); // <-- Your new button
 
     if (focusBtn) {
         focusBtn.addEventListener('click', async () => {
             if (!selectedCounty) {
-                alert('Please click a county first.');
+                showToast('Please click a county first.', true);
                 return;
             }
 
             const bounds = selectedCounty.getBounds();
-            map.flyToBounds(
-                bounds, 
-                { padding: CONFIG.MAP_COUNTY_PADDING, duration: CONFIG.MAP_FLY_DURATION });
-            // console.log('[COUNTY DEBUG] Focused on selected county.');
+            map.flyToBounds(bounds, {
+                padding: CONFIG.MAP_COUNTY_PADDING,
+                duration: CONFIG.MAP_FLY_DURATION
+            });
+
             isFocused = true;
 
             countyLayer.eachLayer((l) => {
@@ -180,7 +141,6 @@ function setupButtons() {
                 else l.setStyle(dimCountyStyle);
             });
 
-            // Only load forest data if toggle is ON
             const forestCheckbox = document.getElementById('toggle-forest');
             if (forestCheckbox && forestCheckbox.checked) {
                 await handleCountySelectionForGEE(selectedCounty.feature);
@@ -190,11 +150,10 @@ function setupButtons() {
 
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            map.flyTo(
-                CONFIG.MAP_DEFAULT_CENTER, 
-                CONFIG.MAP_DEFAULT_ZOOM, 
-                { duration: CONFIG.MAP_FLY_DURATION }
-            );
+            map.flyTo(CONFIG.MAP_DEFAULT_CENTER, CONFIG.MAP_DEFAULT_ZOOM, {
+                duration: CONFIG.MAP_FLY_DURATION
+            });
+
             selectedCounty = null;
             isFocused = false;
 
@@ -205,6 +164,51 @@ function setupButtons() {
             if (forestLayer) {
                 try { map.removeLayer(forestLayer); } catch { }
                 forestLayer = null;
+            }
+        });
+    }
+
+    if (startWildfireSimBtn) {
+        startWildfireSimBtn.addEventListener('click', async () => {
+            console.log('[INFO] "Start Simulation" clicked. Checking forest data status...');
+            
+            // Call the on-demand check function from DataManager
+            const status = await checkForestDataStatus();
+
+            switch (status) {
+                case 'COMPLETED':
+                    // SUCCESS!
+                    const filePath = getCurrentGEEForestGeoJSON();
+                    console.log(`[INFO] Forest data is ready at: ${filePath}. Starting simulation...`);
+                    showToast('Forest data is ready. Starting simulation...', false); // false = not an error
+
+                    // --- As requested, placeholder for simulation start ---
+                    // startActualSimulation(filePath); 
+                    // ----------------------------------------------------
+                    break;
+
+                case 'PROCESSING':
+                    // NOT DONE YET
+                    console.warn('[WARN] Forest data is not ready. Still processing.');
+                    showToast('Forest data is still being processed. Please wait.', true); // true = isError
+                    break;
+
+                case 'FAILED':
+                    // FAILED
+                    console.error('[ERROR] Forest data export failed.');
+                    showToast('Forest data export failed. Please try again.', true); // true = isError
+                    break;
+                
+                case 'NONE':
+                    // NOT EVEN STARTED
+                    console.warn('[WARN] Forest data export was never started.');
+                    showToast('Please select and focus on a county to prepare data first.', true); // true = isError
+                    break;
+
+                default:
+                    // UNKNOWN
+                    console.error(`[ERROR] Unknown forest data status: ${status}`);
+                    showToast('An unknown error occurred. Check console.', true);
             }
         });
     }
@@ -225,18 +229,16 @@ function setupLayerToggles() {
         forestCheckbox.addEventListener('change', async (e) => {
             if (e.target.checked) {
                 if (!selectedCounty) {
-                    showToast('Select a county first.');
+                    showToast('Select a county first.', true); // Pass true for isError
                     return;
                 }
                 if (!isFocused) {
-                    showToast('Focus on the county first to load forest cover.');
+                    showToast('Focus on the county first to load forest cover.', true); // Pass true for isError
                     return;
                 }
                 await handleCountySelectionForGEE(selectedCounty.feature);
-            } else {
-                if (forestLayer) {
-                    try { map.removeLayer(forestLayer); } catch { }
-                }
+            } else if (forestLayer) {
+                try { map.removeLayer(forestLayer); } catch { }
             }
         });
     }
@@ -248,11 +250,8 @@ function updateCountyLabel(text) {
     if (!container) return;
 
     container.textContent = text;
-
-    // Add a "highlight" class briefly to draw attention
     container.classList.add('label-flash');
 
-    // Remove it after 2 seconds (or whatever duration you want)
     setTimeout(() => {
         container.classList.remove('label-flash');
     }, CONFIG.COUNTY_LABEL_FLASH_DURATION);

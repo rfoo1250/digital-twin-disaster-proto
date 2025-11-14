@@ -7,6 +7,7 @@
 
 import CONFIG from '../../config.js';
 // const LOCAL_API_BASE_URL = 'http://127.0.0.1:5000';
+
 /**
  * Run wildfire simulation.
  * Sends ignition coordinates to the backend and returns simulation results.
@@ -34,9 +35,9 @@ async function runWildfireSimulation(params) {
 
 /**
  * Get a dynamic GEE layer URL.
- * Sends a GeoJSON geometry to the backend, which returns
- * a clipped Google Earth Engine tile URL.
- * @param {Object} geometry - GeoJSON geometry object
+ * Sends a GeoJSON geometry (e.g., a county) to the backend, which returns
+ * a clipped Google Earth Engine tile URL for visualization.
+ * @param {Object} geometry - GeoJSON geometry object (e.g., county)
  * @returns {Promise<string|null>} - Tile URL string
  */
 async function getGEEClippedLayer(geometry) {
@@ -65,4 +66,62 @@ async function getGEEClippedLayer(geometry) {
     }
 }
 
-export { runWildfireSimulation, getGEEClippedLayer };
+/**
+ * STEP 1: Start the GEE forest geometry export task.
+ * @param {Object} geometry - GeoJSON geometry
+ * @param {string} countyName - Name of the county
+ * @param {string} stateAbbr - State abbreviation
+ * @returns {Promise<Object|null>} - Task response object (e.g., {status, task_id, filename_key, local_path})
+ */
+async function startForestExport(geometry, countyName, stateAbbr) {
+    const startExportEndpoint = `${CONFIG.API_BASE_URL}/start-export`;
+    try {
+        const response = await fetch(startExportEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // Send all info needed for caching
+            body: JSON.stringify({ geometry, countyName, stateAbbr }),
+        });
+        
+        // A 200 (OK) means a cache hit.
+        // A 202 (Accepted) means the task is processing.
+        if (!response.ok) {
+             throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('[API Error] Start Forest Export:', error);
+        alert('Error starting forest data export. See console for details.');
+        return null;
+    }
+}
+
+/**
+ * STEP 2: Check the status of the export task.
+ * @param {string} taskId - The GEE-generated ID for the task (e.g., "P7NDW...")
+ * @returns {Promise<Object|null>} - Status response object
+ */
+async function checkExportStatus(taskId, countyKey) {
+        // We add the countyKey as a URL query parameter.
+    const checkStatusEndpoint = `${CONFIG.API_BASE_URL}/check-status/${taskId}?countyKey=${countyKey}`;
+    try {
+        const response = await fetch(checkStatusEndpoint, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) {
+             throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('[API Error] Check Export Status:', error);
+        return null;
+    }
+}
+
+export { 
+    runWildfireSimulation, 
+    getGEEClippedLayer,
+    startForestExport,
+    checkExportStatus
+};
