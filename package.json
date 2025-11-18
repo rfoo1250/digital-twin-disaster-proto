@@ -4,6 +4,7 @@
     "description": "Frontend for disaster digital twin prototype",
     "main": "app.js",
     "dependencies": {
+        "@turf/turf": "^7.3.0",
         "acorn": "^6.4.2",
         "advarr": "^0.4.0",
         "ajv": "^6.12.6",
@@ -355,7 +356,6 @@
         "tr46": "^0.0.3",
         "ts-node": "^8.10.2",
         "tty-browserify": "^0.0.0",
-        "turf": "^3.0.14",
         "txml": "^3.1.2",
         "type": "^2.7.3",
         "type-fest": "^3.13.1",
