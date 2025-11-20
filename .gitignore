@@ -33,6 +33,7 @@ secrets/
 # Miscellaneous
 __pycache__/
 old_*
+test_*
 .resources.md
 
 # VSCode settings

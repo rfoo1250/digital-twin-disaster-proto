@@ -7,8 +7,9 @@
 
 const CONFIG = {
     // ------------------ API ------------------ //
-    // API_BASE_URL: 'http://127.0.0.1:5000/api', // Flask backend root
-    API_BASE_URL: '/api', // Use proxy for local dev; production should set full URL
+    API_BASE_URL: 'http://127.0.0.1:5000/api', // Flask backend root
+    // GEE_LAYER_ENDPOINT: '/get_layer',
+    // WILDFIRE_SIM_ENDPOINT: '/simulate',
 
     // ------------------ MAP ------------------ //
     MAP_DEFAULT_CENTER: [37.8, -96.0],  // U.S. center
@@ -23,8 +24,7 @@ const CONFIG = {
 
     // MapTiler keys (used in WildfireMapLayer)
     MAPTILER_API_KEY: 'JpoaHlHUOI1nu8GvzUc0',
-    MAPTILER_SATELLITE_URL:
-        'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=JpoaHlHUOI1nu8GvzUc0',
+    MAPTILER_SATELLITE_URL: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=JpoaHlHUOI1nu8GvzUc0',
 
     // ------------------ UI & SIMULATION ------------------ //
     DEBUG_MODE: true,
@@ -35,8 +35,8 @@ const CONFIG = {
     TOAST_SHOW_TIME: 3000, // ms
 
     // ------------------ DATA ------------------ //
-    COUNTY_GEOJSON_URL: 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json',
-    GEOTIFF_URL: '/data/shared/geotiffs/',
+    COUNTY_GEOJSON_URL: '/public/',
+    GEE_TIFF_BASE_URL: '/data/geotiffs/',
 
     // ------------------ ENVIRONMENTS ------------------ //
     // ENV: import.meta?.env?.MODE || 'development',
