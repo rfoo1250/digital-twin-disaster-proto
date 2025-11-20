@@ -9,12 +9,15 @@ google-cloud-storage>=3.5.0
 # --- Geospatial & Numerical Support ---
 numpy>=1.23.0
 scipy>=1.10.0
+rasterio>=1.3.9
 
 # --- GeoJSON / Raster / Vector Processing ---
 geopandas>=0.14.0
 shapely>=2.0.1
-rasterio>=1.3.9
+
+# --- Visualization ---
+matplotlib>=3.7.0
+networkx>=3.1
 
 # --- Logging / Utilities ---
 loguru>=0.7.0
-
