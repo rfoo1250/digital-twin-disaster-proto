@@ -32,6 +32,18 @@ function init() {
 
     map = L.map('map').setView(CONFIG.MAP_DEFAULT_CENTER, CONFIG.MAP_DEFAULT_ZOOM);
 
+    // Create custom panes for controlled layer ordering
+    map.createPane('tilePane');     // default base tile pane
+    map.createPane('forestPane');   // GeoTIFF raster layer pane
+    map.createPane('overlayPane');  // vector polygons (default)
+    map.createPane('markerPane');   // markers on top
+
+    // Set z-index order (lower = below)
+    map.getPane('tilePane').style.zIndex = 200;
+    map.getPane('forestPane').style.zIndex = 300;
+    map.getPane('overlayPane').style.zIndex = 400;
+    map.getPane('markerPane').style.zIndex = 600;
+
     L.tileLayer(CONFIG.TILE_LAYER_URL, {
         attribution: CONFIG.TILE_LAYER_ATTRIBUTION,
     }).addTo(map);
@@ -117,17 +129,43 @@ async function handleCountySelectionForGEE(feature) {
                 const arrayBuffer = await response.arrayBuffer();
                 geoRaster = await parseGeoraster(arrayBuffer);
 
+                // Remove old layer if present
                 if (forestLayer) {
                     try { map.removeLayer(forestLayer); } catch {}
                 }
 
+                // Create a mask polygon from the current county geometry
+                const countyMask = L.geoJSON(feature.geometry, {
+                    style: { color: '#00FF00', weight: 2, opacity: 0.6, fillOpacity: 0 }
+                });
+
+                // Create the GeoTIFF layer clipped to county boundary
                 forestLayer = new GeoRasterLayer({
                     georaster: geoRaster,
-                    opacity: CONFIG.DEFAULT_FOREST_OPACITY,
-                    resolution: 256
+                    pane: 'forestPane', // draw below county borders
+                    opacity: 1.0,
+                    resolution: 128,
+                    pixelValuesToColorFn: function(values) {
+                        const val = values[0];
+                        if (val === 1) return 'rgba(0, 150, 0, 0.9)'; // forest = green
+                        return 'rgba(0, 0, 0, 0)'; // transparent
+                    },
+                    mask: feature.geometry
                 }).addTo(map);
 
-                showToast('Loaded local forest GeoTIFF successfully.');
+                // Re-apply border styling to ensure black outline stays on top
+                countyLayer.eachLayer((l) => {
+                    if (l === selectedCounty) {
+                        l.bringToFront();
+                        l.setStyle(highlightCountyStyle); // Black bold border
+                    } else {
+                        l.setStyle(dimCountyStyle);
+                    }
+                });
+
+                // forestLayer.addTo(map);
+                // countyMask.addTo(map);
+                showToast('Forest GeoTIFF loaded successfully.');
                 geotiffLoaded = true;
             } else {
                 console.warn(`[WARN] No local GeoTIFF found for ${countyKey}, falling back to GEE.`);
@@ -187,9 +225,6 @@ function setupButtons() {
                 duration: CONFIG.MAP_FLY_DURATION
             });
 
-            isFocused = true;
-            updateButtonStates();
-
             countyLayer.eachLayer((l) => {
                 if (l === selectedCounty) l.setStyle(highlightCountyStyle);
                 else l.setStyle(dimCountyStyle);
@@ -199,6 +234,9 @@ function setupButtons() {
             if (forestCheckbox && forestCheckbox.checked) {
                 await handleCountySelectionForGEE(selectedCounty.feature);
             }
+
+            isFocused = true;
+            updateButtonStates();
         });
     }
 
@@ -242,7 +280,7 @@ function setupButtons() {
                 setIgnitionPointBtn.textContent = 'Cancel set point of ignition';
                 showToast('Click on a forest pixel in the selected/focused county.');
 
-                onMapClickHandler = (e) => {
+                onMapClickHandler = async (e) => {
                     if (!isSettingIgnitionPoint) return;
 
                     const { lat, lng } = e.latlng;
@@ -259,24 +297,46 @@ function setupButtons() {
                         return;
                     }
 
-                    const pixelValue = geoRaster.getValuesAtLatLng(lat, lng);
-                    const forestVal = pixelValue && pixelValue[0];
+                    try {
+                        const x = Math.floor((lng - geoRaster.xmin) / geoRaster.pixelWidth);
+                        const y = Math.floor((geoRaster.ymax - lat) / Math.abs(geoRaster.pixelHeight));
 
-                    if (forestVal && forestVal >= 1) {
-                        if (ignitionMarker) map.removeLayer(ignitionMarker);
-                        ignitionMarker = L.marker([lat, lng]).addTo(map);
+                        if (y >= 0 && y < geoRaster.height && x >= 0 && x < geoRaster.width) {
+                            const forestVal = geoRaster.values[0][y][x]; // 1 = forest, 0 = other
 
-                        localStorage.setItem('ignitionPoint', JSON.stringify({ lat, lng }));
-                        showToast(`Ignition point set at (${lat.toFixed(5)}, ${lng.toFixed(5)}).`);
+                            // might be something wrong with logic of focsuing and enabling buttons
+                            // TODO: patch
+                            if (forestVal === 1) {
+                                // Remove old marker if present
+                                if (ignitionMarker) map.removeLayer(ignitionMarker);
 
-                        // Once set, automatically exit setting mode
-                        isSettingIgnitionPoint = false;
-                        setIgnitionPointBtn.textContent = 'Set point of ignition';
-                        map.off('click', onMapClickHandler);
-                    } else {
-                        showToast('That point is not on a forest pixel.', true);
+                                // Add new ignition marker
+                                ignitionMarker = L.marker([lat, lng], { pane: 'markerPane' }).addTo(map);
+
+                                // Save locally
+                                localStorage.setItem('ignitionPoint', JSON.stringify({ lat, lng }));
+
+                                showToast(`Ignition point set at (${lat.toFixed(5)}, ${lng.toFixed(5)}).`);
+                                
+                                document.getElementById('set-ignition-point').disabled = false;
+                                document.getElementById('start-wildfire-sim').disabled = false;
+
+                                // Exit selection mode
+                                isSettingIgnitionPoint = false;
+                                setIgnitionPointBtn.textContent = 'Set point of ignition';
+                                map.off('click', onMapClickHandler);
+                            } else {
+                                showToast('That point is not on a forest pixel.', true);
+                            }
+                        } else {
+                            showToast('Clicked point outside GeoTIFF bounds.', true);
+                        }
+                    } catch (err) {
+                        console.error('[IGNITION ERROR] Failed to read pixel value:', err);
+                        showToast('Error reading GeoTIFF pixel value.', true);
                     }
                 };
+
 
                 map.on('click', onMapClickHandler);
             } else {

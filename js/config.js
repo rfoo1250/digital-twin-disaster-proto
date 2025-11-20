@@ -35,8 +35,8 @@ const CONFIG = {
     TOAST_SHOW_TIME: 3000, // ms
 
     // ------------------ DATA ------------------ //
-    COUNTY_GEOJSON_URL: '/public/',
-    GEE_TIFF_BASE_URL: '/data/geotiffs/',
+    COUNTY_GEOJSON_URL: '/geojson-counties-fips.json',
+    GEOTIFF_URL: '/data/shared/geotiffs/',
 
     // ------------------ ENVIRONMENTS ------------------ //
     // ENV: import.meta?.env?.MODE || 'development',
