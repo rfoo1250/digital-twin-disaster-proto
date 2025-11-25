@@ -219,6 +219,7 @@ function setupButtons() {
     const resetBtn = document.getElementById('reset-focus');
     const setIgnitionPointBtn = document.getElementById('set-ignition-point');
     const startWildfireSimBtn = document.getElementById('start-wildfire-sim');
+    const removeIgnitionPointBtn = document.getElementById('remove-ignition-point');
 
     if (focusBtn) {
         focusBtn.addEventListener('click', async () => {
@@ -346,6 +347,23 @@ function setupButtons() {
                 setIgnitionPointBtn.textContent = 'Set point of ignition';
                 showToast('Cancelled ignition point selection.');
                 if (onMapClickHandler) map.off('click', onMapClickHandler);
+            }
+        });
+    }
+
+    if (removeIgnitionPointBtn) {
+        removeIgnitionPointBtn.addEventListener('click', () => {
+            if (ignitionMarker) {
+                map.removeLayer(ignitionMarker);
+                ignitionMarker = null;
+                localStorage.removeItem('ignitionPoint');
+                showToast('Ignition point removed.');
+
+                // Disable wildfire sim since no ignition exists
+                const startWildfireSimBtn = document.getElementById('start-wildfire-sim');
+                if (startWildfireSimBtn) startWildfireSimBtn.disabled = true;
+            } else {
+                showToast('No ignition point to remove.', true);
             }
         });
     }
@@ -587,6 +605,17 @@ function setupLayerToggles() {
             } else if (forestLayer) {
                 try { map.removeLayer(forestLayer); } catch { }
             }
+        });
+    }
+
+    const wildfireCheckbox = document.getElementById('toggle-wildfire');
+    if (wildfireCheckbox) {
+        wildfireCheckbox.addEventListener('change', (e) => {
+            if (!map.wildfireFrames) return;
+            map.wildfireFrames.forEach(frame => {
+                if (e.target.checked) frame.addTo(map);
+                else map.removeLayer(frame);
+            });
         });
     }
 }
