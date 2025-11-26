@@ -6,6 +6,7 @@ main#main {
     gap: 1.2rem;
     margin-top: 70px;
     height: calc(100vh - 80px);
+    /* overflow: hidden; */
     padding: 0 1rem;
 }
 
@@ -88,6 +89,50 @@ main#main {
     }
 }
 
+/* Map Legend */
+#map-legend {
+    position: absolute;
+    bottom: 25px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    box-shadow: var(--shadow);
+    z-index: 500;
+    font-size: 0.85rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    border-radius: 3px;
+    border: 1px solid #555;
+}
+.legend-color.forest {
+    background-color: rgba(0,150,0,0.9);
+}
+.legend-color.burning {
+    background-color: rgba(255,165,0,0.9);
+}
+.legend-color.burnt {
+    background-color: rgba(255,0,0,0.9);
+}
+
+
+
 /* Right control panel */
 .right-panel {
     display: flex;
@@ -106,6 +151,13 @@ main#main {
     margin-top: 0;
     font-size: 1rem;
     color: var(--txt);
+}
+
+.panel-divider {
+    width: 100%;
+    border: none;
+    border-top: 2px solid var(--border);
+    margin: 0.5rem 0 0.5rem 0;
 }
 
 /* Dropdowns */
@@ -163,12 +215,51 @@ main#main {
   cursor: not-allowed;
 }
 
+/* Hidden by default */
+.hidden-controls {
+    display: none;
+    margin-top: 1rem;
+}
+
+/* Timestep section */
+#wildfire-timestep-controls h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    color: var(--txt);
+}
+
+/* Buttons layout */
+.timestep-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Arrow buttons */
+.arrow-btn {
+    padding: 6px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+
+.arrow-btn:hover {
+    background: #e9eef4;
+}
+
+
 /* Tooltip */
 .tooltip {
     z-index: 999;
 }
 
 /* Leaflet */
+.leaflet-control-attribution {
+    opacity: 0 !important;
+    pointer-events: none; /* prevents blocking clicks if needed */
+}
+
 /* Option A: The Outline Hack (Best for most) */
 .leaflet-layer .leaflet-tile {
     outline: 1px solid transparent; /* Triggers different rendering path in some browsers */

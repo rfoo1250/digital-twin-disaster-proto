@@ -31,22 +31,30 @@
                     <div id="county-selected-text-container">
                         <p id="county_selected_text">No county selected</p>
                     </div>
+
+                    <div id="map-legend">
+                        <div class="legend-item">
+                            <span class="legend-color forest"></span> Forest
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color burning"></span> Burning
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color burnt"></span> Burnt
+                        </div>
+                    </div>
+
                 </div>
             </section>
         </div>
 
         <div class="right-panel">
-            <div class="layer-panel">
-                <!-- to be changed -->
+            <div id="map-layer-panel" class="layer-panel">
                 <h3>Map Layers</h3>
 
                 <div class="map-controls">
                     <button id="focus-on-county">Focus on County</button>
                     <button id="reset-focus">Reset Focus</button>
-                    <button id="set-ignition-point" class="action-button">Set Ignition Point</button>
-                    <button id="remove-ignition-point" class="action-button">Remove Ignition Point</button>
-
-                    <button id="start-wildfire-sim" class="action-button">Start Wildfire Simulation</button>
                 </div>
 
                 <div class="dropdown">
@@ -57,11 +65,24 @@
                         <label><input type="checkbox" id="toggle-wildfire" checked> Wildfire Simulation</label><br>
                     </div>
                 </div>
-
-
             </div>
-            <div id="wildfire-sim-panel">
-                
+
+            <hr class="panel-divider">
+
+            <div id="wildfire-sim-panel" class="layer-panel">
+                <h3>Wildfire Simulation</h3>
+                <div class="map-controls">
+                    <button id="set-ignition-point" class="action-button">Set Ignition Point</button>
+                    <button id="remove-ignition-point" class="action-button">Remove Ignition Point</button>
+                    <button id="start-wildfire-sim" class="action-button">Start Wildfire Simulation</button>
+                </div>
+                <div id="wildfire-timestep-controls" class="hidden-controls">
+                    <h4>Timestep <span id="timestep-value">0</span></h4>
+                    <div class="timestep-buttons">
+                        <button id="timestep-left" class="arrow-btn">◀</button>
+                        <button id="timestep-right" class="arrow-btn">▶</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>

@@ -107,6 +107,11 @@ function startAnimation() {
         showFrame(0);
     }, WILDFIRE_FRAME_TIMEOUT);
 
+    // cope, reset map view
+    // const map = MapCore.getMap();
+    const c = map.getCenter();
+    map.setView(c, map.getZoom(), { animate: false });
+
     wildfireAnimTimer = setInterval(() => {
         currentFrame++;
 
