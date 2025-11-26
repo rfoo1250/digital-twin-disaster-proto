@@ -46,7 +46,7 @@ async function loadWildfireFrames(outputDir) {
                 georaster: simGeoRaster,
                 pane: "wildfireSimPane",
                 opacity: 0,
-                // resolution: 256,
+                resolution: 256,
                 pixelValuesToColorFn: function(values) {
                     const val = values[0];
                     switch (val) {
@@ -58,7 +58,7 @@ async function loadWildfireFrames(outputDir) {
                 mask: selectedCounty.feature.geometry
             });
 
-            frameLayer.addTo(map);
+            // frameLayer.addTo(map);
             wildfireFrames.push(frameLayer);
             timestep++;
         } catch (err) {
@@ -85,29 +85,17 @@ function startAnimation() {
     const map = MapCore.getMap();
     if (!map || wildfireFrames.length === 0) return;
 
-    stopAnimation(); // Reset any existing animation
+    stopAnimation();
 
-    wildfireFrames.forEach(frame => frame.setOpacity(0));
     let currentFrame = 0;
-    
-    // Function to show a frame with proper rendering
-    const showFrame = (frameIndex) => {
-        wildfireFrames[frameIndex].setOpacity(CONFIG.DEFAULT_WILDFIRE_OPACITY);
-        
-        // Force canvas redraw by temporarily panning the map
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-        map.setView(center, zoom, { animate: false });
-        
-        console.log(`[DEBUG] Showing frame ${frameIndex}`);
-    };
-    
-    // Show first frame with a slight delay to ensure it's ready
-    setTimeout(() => {
-        showFrame(0);
-    }, WILDFIRE_FRAME_TIMEOUT);
+
+    // Add first frame
+    wildfireFrames[currentFrame].addTo(map);
+    wildfireFrames[currentFrame].setOpacity(CONFIG.DEFAULT_WILDFIRE_OPACITY);
+    console.log(`[DEBUG] Showing frame ${currentFrame}`);
 
     wildfireAnimTimer = setInterval(() => {
+        const prev = currentFrame;
         currentFrame++;
 
         if (currentFrame >= wildfireFrames.length) {
@@ -116,10 +104,19 @@ function startAnimation() {
             return;
         }
 
-        wildfireFrames[currentFrame - 1].setOpacity(0);
-        showFrame(currentFrame);
+        // REMOVE previous frame completely
+        map.removeLayer(wildfireFrames[prev]);
+
+        // ADD new frame
+        wildfireFrames[currentFrame].addTo(map);
+        wildfireFrames[currentFrame].setOpacity(CONFIG.DEFAULT_WILDFIRE_OPACITY);
+        
+        // redrawing back
+        wildfireFrames[currentFrame].redraw();
+        console.log(`[DEBUG] Showing frame ${currentFrame}`);
     }, WILDFIRE_ANIMATION_INTERVAL);
 }
+
 
 function stopAnimation() {
     if (wildfireAnimTimer) {

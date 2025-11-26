@@ -114,7 +114,7 @@ function setupButtons() {
             // --- TEST RESPONSE (current) ---
             const response = {
                 success: true,
-                output_dir: `wildfire_output/sim_run_Door_WI_20251121_150709`
+                output_dir: `wildfire_output/sim_run_Door_WI_20251121_134457`
             };
 
             if (!response.success) return showToast("Simulation failed.", true);
