@@ -12,13 +12,13 @@ let countyLayer = null;
 let selectedCounty = null;
 
 // Styles
-const defaultCountyStyle = { color: "#333", weight: 1, opacity: 0.6, fillOpacity: 0 };
-const highlightCountyStyle = { color: "#111", weight: 3, opacity: 0.95, fillOpacity: 0.08 };
+const defaultCountyStyle = { color: "#777", weight: 1, opacity: 0.6, fillOpacity: 0 };
+const highlightCountyStyle = { color: "#999", weight: 3, opacity: 0.95, fillOpacity: 0.1 };
 const dimCountyStyle = { color: "#999", weight: 0.5, opacity: 0.2, fillOpacity: 0 };
 
 function init() {
-    console.log("[INFO] Initializing Leaflet map (MapCore)...");
-    
+    console.log("[INFO] Initializing Leaflet map in MapCore...");
+
     // dont work
     // const _oldSetPos = L.DomUtil.setPosition;
     // L.DomUtil.setPosition = function (el, point, round) {
@@ -47,9 +47,9 @@ function init() {
     map.getPane("overlayPane").style.zIndex = 500;
     map.getPane("markerPane").style.zIndex = 600;
 
-    // Base tile
-    L.tileLayer(CONFIG.TILE_LAYER_URL, {
-        attribution: CONFIG.TILE_LAYER_ATTRIBUTION,
+    // Base tile - Esri World Imagery
+    L.tileLayer(CONFIG.EWI_TILE_LAYER_URL, {
+        attribution: CONFIG.EWI_TILE_LAYER_ATTRIBUTION,
     }).addTo(map);
 
     // Load county boundaries
@@ -62,6 +62,11 @@ function init() {
         }).addTo(map);
     }
 
+    // Extra tile layer - OpenStreetMap
+    // const osmLayer = L.tileLayer(
+    //     CONFIG.OSM_TILE_LAYER_URL,
+    //     { attribution: CONFIG.OSM_TILE_LAYER_ATTRIBUTION }
+    // );
     console.log("[INFO] MapCore initialization complete.");
 }
 

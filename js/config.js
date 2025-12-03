@@ -19,8 +19,10 @@ const CONFIG = {
     MAP_COUNTY_PADDING: [20, 20], // px padding when fitting county bounds
 
     // ------------------ MAP PROVIDERS ------------------ //
-    TILE_LAYER_URL: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    TILE_LAYER_ATTRIBUTION: '&copy; OpenStreetMap contributors',
+    EWI_TILE_LAYER_URL: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    EWI_TILE_LAYER_ATTRIBUTION: "Tiles © Esri — Source: Esri, Earthstar Geographics",
+    OSM_TILE_LAYER_URL: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    OSM_TILE_LAYER_ATTRIBUTION: '&copy; OpenStreetMap contributors',
 
     // MapTiler keys (used in WildfireMapLayer)
     MAPTILER_API_KEY: 'JpoaHlHUOI1nu8GvzUc0',
