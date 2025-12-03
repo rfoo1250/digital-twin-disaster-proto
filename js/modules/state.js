@@ -9,6 +9,24 @@ const appState = {
     isDataLoaded: false,
     allData: null,
     wildfireData: null,   // stores the active wildfire simulation result
+    
+    // FOREST ONLY (legacy)
+    currentForestCoverGeoJSON: null,
+    currentForestCoverExportTask: {
+        id: null,
+        countyKey: null,
+        status: 'NONE',
+        localPath: null
+    },
+
+    // DYNAMIC WORLD ALL-BANDS (new)
+    currentDynamicWorldAllBandsPath: null,
+    currentDynamicWorldAllBandsTask: {
+        id: null,
+        countyKey: null,
+        status: 'NONE',
+        localPath: null
+    }
 };
 
 /**

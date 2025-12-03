@@ -36,13 +36,13 @@ function init() {
 
     // Create custom panes for layer ordering
     map.createPane("tilePane");
-    map.createPane("forestPane");
+    map.createPane("dynamicWorldPane");
     map.createPane("wildfireSimPane");
     map.createPane("overlayPane");
     map.createPane("markerPane");
 
     map.getPane("tilePane").style.zIndex = 200;
-    map.getPane("forestPane").style.zIndex = 300;
+    map.getPane("dynamicWorldPane").style.zIndex = 300;
     map.getPane("wildfireSimPane").style.zIndex = 400;
     map.getPane("overlayPane").style.zIndex = 500;
     map.getPane("markerPane").style.zIndex = 600;

@@ -4,7 +4,7 @@
 import * as turf from "@turf/turf";
 import { showToast } from "../../utils/toast.js";
 import MapCore from "./MapCore.js";
-import ForestLayer from "./ForestLayer.js";
+import DynamicWorldLayer from "./DynamicWorldLayer.js";
 
 let isSettingIgnitionPoint = false;
 let ignitionMarker = null;
@@ -33,7 +33,7 @@ async function handleMapClick(e, countyLayer) {
     if (!isSettingIgnitionPoint) return;
 
     const map = MapCore.getMap();
-    const geoRaster = ForestLayer.getGeoRaster();
+    const geoRaster = DynamicWorldLayer.getGeoRaster();
 
     if (!geoRaster) {
         showToast("Failed to load forest layer.", true);

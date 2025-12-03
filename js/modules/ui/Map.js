@@ -2,7 +2,7 @@
 // High-level orchestrator connecting MapCore, ForestLayer, IgnitionManager, and WildfireSimulationLayer
 
 import MapCore from "./MapCore.js";
-import ForestLayer from "./ForestLayer.js";
+import DynamicWorldLayer from "./DynamicWorldLayer.js";
 import IgnitionManager from "./IgnitionManager.js";
 import WildfireSimulationLayer from "./WildfireSimulationLayer.js";
 import { showToast } from "../../utils/toast.js";
@@ -43,16 +43,14 @@ function setupButtons() {
                 duration: 1.5
             });
 
-            // Highlight county
             MapCore.getCountyLayer().eachLayer((l) => {
                 if (l === selected) l.setStyle(MapCore.highlightCountyStyle);
                 else l.setStyle(MapCore.dimCountyStyle);
             });
 
-            // Auto-load forest if enabled
-            const forestToggle = document.getElementById("toggle-forest");
-            if (forestToggle && forestToggle.checked) {
-                await ForestLayer.handleCountySelectionForGEE(selected.feature);
+            const dwToggle = document.getElementById("toggle-dynamicworld");
+            if (dwToggle && dwToggle.checked) {
+                await DynamicWorldLayer.handleCountySelectionForDynamicWorld(selected.feature);
             }
 
             isFocused = true;
@@ -68,11 +66,9 @@ function setupButtons() {
             isFocused = false;
             MapCore.setSelectedCounty(null);
 
-            // Restore county styles
             MapCore.getCountyLayer().eachLayer(l => l.setStyle(MapCore.defaultCountyStyle));
 
-            // Clear layers
-            ForestLayer.resetForest();
+            DynamicWorldLayer.resetDynamicWorld();
             WildfireSimulationLayer.resetSimulation();
             IgnitionManager.removeIgnitionPoint();
 
@@ -144,33 +140,6 @@ function setupButtons() {
 
             WildfireSimulationLayer.startAnimation();
             enableTimestepControls();
-
-            // if (loaded) {
-            //     hideLoader();
-            //     showToast("Starting animation...");
-
-            //     // Wrap animation to detect completion
-            //     const frames = WildfireSimulationLayer.getFrames();
-            //     const totalFrames = frames.length;
-
-            //     let checkFinished = null;
-
-            //     // Start animation
-            //     WildfireSimulationLayer.startAnimation();
-
-            //     // Poll until animation is done
-            //     // checkFinished = setInterval(() => {
-            //     //     const lastFrame = frames[totalFrames - 1];
-
-            //     //     // Real opacity value (Leaflet mutates _opacity internally)
-            //     //     const lastOpacity = lastFrame._opacity;
-            //     //     if (lastOpacity === CONFIG.DEFAULT_WILDFIRE_OPACITY) {
-            //     //         clearInterval(checkFinished);
-            //     //         enableTimestepControls();
-            //     //     }
-            //     // }, 500);
-            //     enableTimestepControls();
-            // }
 
         });
     }
@@ -253,7 +222,7 @@ function setupButtons() {
 // ---------------- TOGGLES ----------------
 function setupLayerToggles() {
     const countyToggle = document.getElementById("toggle-counties");
-    const forestToggle = document.getElementById("toggle-forest");
+    const dynamicWorldToggle = document.getElementById("toggle-dynamic-world");
     const wildfireToggle = document.getElementById("toggle-wildfire");
 
     const map = MapCore.getMap();
@@ -265,15 +234,15 @@ function setupLayerToggles() {
         });
     }
 
-    if (forestToggle) {
-        forestToggle.addEventListener("change", async (e) => {
+    if (dynamicWorldToggle) {
+        dynamicWorldToggle.addEventListener("change", async (e) => {
             const selected = MapCore.getSelectedCounty();
             if (e.target.checked) {
                 if (!selected) return showToast("Please select a county first.", true);
                 if (!isFocused) return showToast("Please focus on the county first.", true);
-                await ForestLayer.handleCountySelectionForGEE(selected.feature);
+                await DynamicWorldLayer.handleCountySelectionForDynamicWorld(selected.feature);
             } else {
-                const layer = ForestLayer.getForestLayer();
+                const layer = DynamicWorldLayer.getDynamicWorldLayer();
                 if (layer) map.removeLayer(layer);
             }
         });
@@ -282,22 +251,12 @@ function setupLayerToggles() {
     if (wildfireToggle) {
         wildfireToggle.addEventListener("change", (e) => {
             const frames = WildfireSimulationLayer.getFrames();
-
-            // No wildfire simulation yet?
-            // if (!frames || frames.length === 0) {
-            //     showToast("Run a wildfire simulation first.", true);
-            //     wildfireToggle.checked = false; // revert toggle
-            //     return;
-            // }
-
-            // Toggle frames
             frames.forEach(frame => {
                 if (e.target.checked) frame.addTo(map);
                 else map.removeLayer(frame);
             });
         });
     }
-
 }
 
 // ---------------- STATE RESTORE ----------------

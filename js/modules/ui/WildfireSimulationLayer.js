@@ -5,7 +5,7 @@ import parseGeoraster from "georaster";
 import GeoRasterLayer from "georaster-layer-for-leaflet";
 import CONFIG from "../../config.js";
 import MapCore from "./MapCore.js";
-import ForestLayer from "./ForestLayer.js";
+import DynamicWorldLayer from "./DynamicWorldLayer.js";
 import { showToast } from "../../utils/toast.js";
 import { getCurrentCountyKey } from "../services/DataManager.js";
 
@@ -74,8 +74,9 @@ async function loadWildfireFrames(outputDir) {
     }
 
     // Ensure correct ordering
-    const forestLayer = ForestLayer.getForestLayer();
-    if (forestLayer && map.hasLayer(forestLayer)) forestLayer.bringToFront();
+    const dwLayer = DynamicWorldLayer.getDynamicWorldLayer();
+    if (dwLayer && map.hasLayer(dwLayer)) dwLayer.bringToFront();
+
     const countyLayer = MapCore.getCountyLayer();
     if (countyLayer) countyLayer.bringToFront();
 
