@@ -7,6 +7,8 @@ import {
     checkExportStatus
 } from './ApiClient.js';
 import { showToast } from '../../utils/toast.js';
+import { showLoader, hideLoader } from "../../utils/loader.js";
+
 
 async function loadAllData() {
     try {
@@ -27,24 +29,27 @@ async function loadWildfireSimulation({ countyKey, igniPointLat, igniPointLon })
         const response = await runWildfireSimulation(countyKey, igniPointLat, igniPointLon);
         if (!response) {
             console.warn('[WARN] No wildfire simulation response received.');
-            return;
+            return { success: false };
         }
-
 
         if (response.success && response.output_dir) {
             setState('wildfireOutputDir', response.output_dir);
             console.log(`[INFO] Wildfire simulation completed for ${countyKey}. Output directory: ${response.output_dir}`);
-            showToast(`Wildfire simulation complete.`, false);
+
             return response;
         } else {
-            console.warn('[WARN] Wildfire simulation returned an error or missing output_dir:', response.message);
-            showToast(`Wildfire simulation error.`, true);
+            console.warn('[WARN] Wildfire simulation returned an error:', response.message);
+            showToast(`Wildfire simulation error.`, true); // errors only
+            return { success: false };
         }
+
     } catch (error) {
         console.error('[ERROR] DataManager: Failed to load wildfire simulation.', error);
         showToast('Failed to run wildfire simulation.', true);
+        return { success: false };
     }
 }
+
 
 async function loadGEEClippedLayer(geometry) {
     try {

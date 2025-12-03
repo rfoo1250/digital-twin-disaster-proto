@@ -6,6 +6,7 @@ import ForestLayer from "./ForestLayer.js";
 import IgnitionManager from "./IgnitionManager.js";
 import WildfireSimulationLayer from "./WildfireSimulationLayer.js";
 import { showToast } from "../../utils/toast.js";
+import { showLoader, hideLoader } from "../../utils/loader.js";
 import {
     loadWildfireSimulation,
     getCurrentCountyKey
@@ -101,10 +102,13 @@ function setupButtons() {
             if (!ignition) return showToast("Please set an ignition point first.", true);
             if (!selected) return showToast("Please select a county first.", true);
 
-            showToast("Loading wildfire simulation...");
+            showLoader("Loading wildfire simulation...");
 
             const countyKey = getCurrentCountyKey();
-            if (!countyKey) return showToast("Missing county key.", true);
+            if (!countyKey) {
+                hideLoader();
+                return showToast("Missing county key.", true);
+            }
 
             // --- REAL CALL (future) ---
             const response = await loadWildfireSimulation({
@@ -121,34 +125,52 @@ function setupButtons() {
             //     // output_dir: `wildfire_output/sim_run_Door_WI_20251121_134457`
             // };
 
-            if (!response.success) return showToast("Simulation failed.", true);
+            if (!response.success) {
+                hideLoader();
+                return showToast("Simulation failed.", true);
+            }
 
             const loaded = await WildfireSimulationLayer.loadWildfireFrames(response.output_dir);
-            if (loaded) {
-                showToast("Starting animation...");
-
-                // Wrap animation to detect completion
-                const frames = WildfireSimulationLayer.getFrames();
-                const totalFrames = frames.length;
-
-                let checkFinished = null;
-
-                // Start animation
-                WildfireSimulationLayer.startAnimation();
-
-                // Poll until animation is done
-                // checkFinished = setInterval(() => {
-                //     const lastFrame = frames[totalFrames - 1];
-
-                //     // Real opacity value (Leaflet mutates _opacity internally)
-                //     const lastOpacity = lastFrame._opacity;
-                //     if (lastOpacity === CONFIG.DEFAULT_WILDFIRE_OPACITY) {
-                //         clearInterval(checkFinished);
-                //         enableTimestepControls();
-                //     }
-                // }, 500);
-                enableTimestepControls();
+            if (!loaded) {
+                hideLoader();
+                return showToast("Failed to load simulation frames.", true);
             }
+
+            // Finished loading — now hide loader BEFORE starting animation
+            hideLoader();
+
+            // Optional toast for user feedback (if you want)
+            showToast("Starting animation...");
+
+            WildfireSimulationLayer.startAnimation();
+            enableTimestepControls();
+
+            // if (loaded) {
+            //     hideLoader();
+            //     showToast("Starting animation...");
+
+            //     // Wrap animation to detect completion
+            //     const frames = WildfireSimulationLayer.getFrames();
+            //     const totalFrames = frames.length;
+
+            //     let checkFinished = null;
+
+            //     // Start animation
+            //     WildfireSimulationLayer.startAnimation();
+
+            //     // Poll until animation is done
+            //     // checkFinished = setInterval(() => {
+            //     //     const lastFrame = frames[totalFrames - 1];
+
+            //     //     // Real opacity value (Leaflet mutates _opacity internally)
+            //     //     const lastOpacity = lastFrame._opacity;
+            //     //     if (lastOpacity === CONFIG.DEFAULT_WILDFIRE_OPACITY) {
+            //     //         clearInterval(checkFinished);
+            //     //         enableTimestepControls();
+            //     //     }
+            //     // }, 500);
+            //     enableTimestepControls();
+            // }
 
         });
     }
@@ -191,7 +213,7 @@ function setupButtons() {
     function showTimestep(ts) {
         const frames = WildfireSimulationLayer.getFrames();
         if (!frames || frames.length === 0) return;
-        
+
         // Hide all frames
         frames.forEach(f => f.setOpacity(0));
 
@@ -202,7 +224,7 @@ function setupButtons() {
         const map = MapCore.getMap();
         const c = map.getCenter();
         map.setView(c, map.getZoom(), { animate: false });
-        
+
         currentTimestep = ts;
         updateTimestepControlsUI();
     }

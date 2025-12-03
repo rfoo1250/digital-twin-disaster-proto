@@ -89,6 +89,13 @@
 
     <div id="tip" class="tooltip"></div>
     <div id="toast" class="toast"></div>
+    <div id="loading-overlay" class="hidden" role="status" aria-live="polite" aria-hidden="true">
+        <div class="loading-backdrop" aria-hidden="true"></div>
+        <div class="loading-card" id="loading-card" aria-hidden="false">
+            <img id="loading-gif" class="loading-gif" alt="Loading" src="/assets/loader.gif" />
+            <div id="loading-msg" class="loading-msg">Loading…</div>
+        </div>
+    </div>
 
     <script type="module" src="./js/app.js"></script>
 </body>

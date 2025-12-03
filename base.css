@@ -201,3 +201,69 @@ button:hover {
     opacity: 0;
     transition: opacity .12s;
 }
+
+/* ================================
+   Loading Overlay (global)
+   ================================ */
+
+#loading-overlay.hidden {
+    display: none;
+}
+
+#loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000; /* above toast (1000) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.loading-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(2px);
+}
+
+.loading-card {
+    position: relative;
+    z-index: 2100;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px 22px;
+    min-width: 220px;
+    max-width: 90%;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.loading-gif {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.loading-msg {
+    font-size: 0.9rem;
+    color: var(--txt);
+}
+
+/* Smaller screens */
+@media (max-width: 420px) {
+    .loading-card {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+    .loading-gif {
+        width: 32px;
+        height: 32px;
+    }
+    .loading-msg {
+        font-size: 0.85rem;
+    }
+}
