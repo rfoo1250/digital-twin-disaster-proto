@@ -1,7 +1,12 @@
 # Digital Twin for Disasters
 
-🚧 SUMAMARY NEEDED 🚧
+<!-- 🚧 SUMAMARY NEEDED 🚧 -->
+## Summary
+This project is a Digital Twin platform for disaster modeling and visualization, currently focused on wildfire simulation with an extensible design for future disaster types.
 
+Wildfire simulations are generated using a stochastic cellular automata (SCA) model and represented as GeoTIFF (.tif) raster files. The system integrates Google Earth Engine for geospatial data access, including land cover data from Dynamic World V1, and uses Google Cloud Storage (GCS) for managing simulation and raster outputs.
+
+Simulation results are visualized on an interactive map interface using Leaflet and georaster-layer-for-leaflet for simple implementation of the simulation.
 
 ## System Requirements
 
