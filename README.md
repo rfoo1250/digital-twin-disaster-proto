@@ -95,19 +95,52 @@ python -m http.server 8000
 Then, go to your localhost's port via a web browser.
 
 ## Instructions on Digital Twin
-To begin running a simulation -
-1. You should first see the user interface with a Map and controls. The Map will be the control to where you pinpoint which county to select and also the display of the wildfire simulation.
-2. Select a county and click on the "Focus on County" button, this will zoom into the selected county and load the DynamicWorld layer onto the Map.
-3. To set an ignition point for the simulation, click on the "Set Ignition Point" button, then immediately towards a point of interest that is on the county of concern (onto the greens in DynamicWorld). You should see a marker on the Map when the igition point is successfully set.
-4. To start a simulation, after setting the ignition point on the highlighted county, with enabling the DynamicWorld layer on the Map, click on "Start Simulation" to start simulation.
-Note: this will take some time, have a coffee break, the system will send a pop-up when it is done, the Map will automatically display the animation.
-5. The simulation should be displayed frame-by-frame on a 1 second interval. Once it is done, there should be a control to go back or move forward on the frames.
-Note: zoom in once to see the changes.
+### Running a Simulation
 
-On the side note -
-1. You can toggle layers by hovering over the collapsed checkbox menu "Base Layers" to view and enable/disable layers that are shown/loaded.
-2. The "Reset Focus" button resets the Map view to the initial view and disable the highlight and the DynamicWorld layer.
-3. The "Remove Ignition Point" button resets the ignition point to allow selecting a new location point.
+1. **Initial Interface**
+   - Upon loading the application, you will see an interactive **map interface** with control panels.
+   - The map is used both to **select a county** and to **display wildfire simulation results**.
+
+2. **Select and Focus on a County**
+   - Select a county on the map.
+   - Click **“Focus on County”** to zoom into the selected area.
+   - This action automatically loads and displays the **Dynamic World land cover layer** for the selected county.
+
+3. **Set an Ignition Point**
+   - Click **“Set Ignition Point”**.
+   - Click a location within the focused county to define the ignition point  
+     *(preferably on vegetated regions shown in Dynamic World)*.
+   - A marker will appear on the map once the ignition point is successfully set.
+
+4. **Start the Simulation**
+   - Ensure the ignition point is set and the Dynamic World layer is enabled.
+   - Click **“Start Simulation”** to begin the wildfire simulation.
+   - Simulation execution may take some time.
+     - Once completed, a notification will appear.
+     - The simulation will automatically load on the map.
+
+5. **Navigate Simulation Frames**
+   - The wildfire simulation is displayed as an animation with **1-second intervals between frames**.
+   - Playback controls allow you to:
+     - Rewind
+     - Step forward
+     - Revisit specific frames
+   - Zooming in may be necessary to clearly observe fire spread progression.
+
+### Additional Controls and Notes
+
+- **Layer Management**
+  - Hover over the **“Base Layers”** menu to enable or disable map layers.
+
+- **Reset Focus**
+  - The **“Reset Focus”** button:
+    - Returns the map to its default view
+    - Disables the county highlight
+    - Disables the Dynamic World layer
+
+- **Remove Ignition Point**
+  - Use **“Remove Ignition Point”** to clear the current ignition marker and select a new location.
+
 
 1/5/2026 - images needed to illustrate steps
 
