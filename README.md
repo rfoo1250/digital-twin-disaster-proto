@@ -94,6 +94,23 @@ python -m http.server 8000
 
 Then, go to your localhost's port via a web browser.
 
+## Instructions on Digital Twin
+To begin running a simulation -
+1. You should first see the user interface with a Map and controls. The Map will be the control to where you pinpoint which county to select and also the display of the wildfire simulation.
+2. Select a county and click on the "Focus on County" button, this will zoom into the selected county and load the DynamicWorld layer onto the Map.
+3. To set an ignition point for the simulation, click on the "Set Ignition Point" button, then immediately towards a point of interest that is on the county of concern (onto the greens in DynamicWorld). You should see a marker on the Map when the igition point is successfully set.
+4. To start a simulation, after setting the ignition point on the highlighted county, with enabling the DynamicWorld layer on the Map, click on "Start Simulation" to start simulation.
+Note: this will take some time, have a coffee break, the system will send a pop-up when it is done, the Map will automatically display the animation.
+5. The simulation should be displayed frame-by-frame on a 1 second interval. Once it is done, there should be a control to go back or move forward on the frames.
+Note: zoom in once to see the changes.
+
+On the side note -
+1. You can toggle layers by hovering over the collapsed checkbox menu "Base Layers" to view and enable/disable layers that are shown/loaded.
+2. The "Reset Focus" button resets the Map view to the initial view and disable the highlight and the DynamicWorld layer.
+3. The "Remove Ignition Point" button resets the ignition point to allow selecting a new location point.
+
+1/5/2026 - images needed to illustrate steps
+
 ## Technicalities
 This project maintains its logs of erros, bugs, and fixes on [Github's internal Issues page](https://github.com/rfoo1250/digital-twin-disaster-proto/issues).
 
