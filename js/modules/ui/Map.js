@@ -1,5 +1,5 @@
 // Map.js
-// High-level orchestrator connecting MapCore, ForestLayer, IgnitionManager, and WildfireSimulationLayer
+// High-level orchestrator connecting MapCore, DynamicWorldLayer, IgnitionManager, and WildfireSimulationLayer
 
 import MapCore from "./MapCore.js";
 import DynamicWorldLayer from "./DynamicWorldLayer.js";
